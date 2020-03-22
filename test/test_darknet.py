@@ -1,4 +1,4 @@
-from darknet_python.run_detector import ThreadingDetector
+from darknet_video.run_detector import ThreadingDetector
 
 if __name__ == '__main__':
     door_cam = "http://192.168.0.52:8081/"

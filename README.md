@@ -1,4 +1,4 @@
-# Darknet Python Wrapper
+# Darknet Video
 Extract files from [darknet](https://github.com/culdo/darknet) to  maintain python wrapper easier.  
 * Only test on Ubuntu 16.04.
 * Default linux lib(libdarknet.so) compiled at CUDA-10.0 CuDnn-7.5.0.56
