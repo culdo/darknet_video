@@ -23,19 +23,19 @@ cfg_dir = os.path.join(package_dir, "cfg")
 
 
 class YOLO:
-    def __init__(self, stream, weight_path,
+    def __init__(self, stream, weights_path,
                  config_path=None,
                  meta_path=os.path.join(cfg_dir, "coco.data"), cv_window_size=(1100, 960)):
 
         self.stream = stream
         self.config_path = config_path
-        self.weight_path = weight_path
+        self.weights_path = weights_path
         self.meta_path = meta_path
 
         self._check_path()
 
         self.netMain = darknet.load_net_custom(self.config_path.encode(
-            "ascii"), weight_path.encode("ascii"), 0, 1)  # batch size = 1
+            "ascii"), weights_path.encode("ascii"), 0, 1)  # batch size = 1
         self.input_size = (darknet.network_width(self.netMain), darknet.network_height(self.netMain))
 
         self._load_meta()
@@ -69,14 +69,14 @@ class YOLO:
 
     def _check_path(self):
         if self.config_path is None:
-            weight_name = os.path.basename(self.weight_path)
+            weight_name = os.path.basename(self.weights_path)
             self.config_path = os.path.join(cfg_dir, "%s.cfg" % os.path.splitext(weight_name)[0])
         if not os.path.exists(self.config_path):
             raise ValueError("Invalid config path `" +
                              os.path.abspath(self.config_path) + "`")
-        if not os.path.exists(self.weight_path):
+        if not os.path.exists(self.weights_path):
             raise ValueError("Invalid weight path `" +
-                             os.path.abspath(self.weight_path) + "`")
+                             os.path.abspath(self.weights_path) + "`")
         if not os.path.exists(self.meta_path):
             raise ValueError("Invalid data file path `" +
                              os.path.abspath(self.meta_path) + "`")
