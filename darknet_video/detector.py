@@ -23,7 +23,7 @@ cfg_dir = os.path.join(package_dir, "cfg")
 
 
 class YOLO:
-    def __init__(self, weight_path, stream,
+    def __init__(self, stream, weight_path,
                  config_path=None,
                  meta_path=os.path.join(cfg_dir, "coco.data"), cv_window_size=(1100, 960)):
 

@@ -7,6 +7,8 @@ Extract files from [darknet](https://github.com/culdo/darknet) to  maintain pyth
 ## Usage
 ```
 from darknet_python.run_detector import ThreadingDetector
-# Using web camera
-ThreadingDetector(0, weights_path)
+# First argument same as cv2.captureVideo() argument, then we use web camera.
+# If not pass config_path, loading config of basename of weights by default.
+# By default loading meta file of coco.data.
+ThreadingDetector(0, weights_path='yolov3.weights')
 ```

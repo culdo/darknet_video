@@ -5,8 +5,8 @@ from darknet_video.video import CvVideo
 
 
 class ThreadingDetector:
-    def __init__(self, url, weights="../../darknet/bin/csresnext50-panet-spp-original-optimal.weights"):
-        self.weights = weights
+    def __init__(self, url, **kwargs):
+        self.kwargs = kwargs
         self.url = url
 
         cap_th = self._captrue_stream()
@@ -18,7 +18,7 @@ class ThreadingDetector:
 
     def _detect_frame(self):
         def thread():
-            yolo = YOLO(self.weights, self.stream)
+            yolo = YOLO(self.stream, **self.kwargs)
             yolo.detect_stream()
         return Thread(target=thread)
 
