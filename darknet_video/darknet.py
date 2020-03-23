@@ -28,7 +28,6 @@ Windows Python 2.7 version: https://github.com/AlexeyAB/darknet/blob/fc496d52bf2
 """
 # pylint: disable=R, W0401, W0614, W0703
 from ctypes import *
-import math
 import random
 import os
 
@@ -124,9 +123,9 @@ if os.name == "nt":
             # compile but not renamed
             lib = CDLL(winGPUdll, RTLD_GLOBAL)
             print(
-                        "Environment variables indicated a CPU run, but we didn't find `" + winNoGPUdll + "`. Trying a GPU run anyway.")
+                "Environment variables indicated a CPU run, but we didn't find `" + winNoGPUdll + "`. Trying a GPU run anyway.")
 else:
-    lib = CDLL(os.path.dirname(__file__)+"/libdarknet.so", RTLD_GLOBAL)
+    lib = CDLL(os.path.dirname(__file__) + "/libdarknet.so", RTLD_GLOBAL)
 lib.network_width.argtypes = [c_void_p]
 lib.network_width.restype = c_int
 lib.network_height.argtypes = [c_void_p]
@@ -259,37 +258,28 @@ def detect(net, meta, image, thresh=.5, hier_thresh=.5, nms=.45, debug=False):
 
 
 def detect_image(net, meta, im, custom_shape, thresh=.5, hier_thresh=.5, nms=.45):
-    # import cv2
-    # custom_image_bgr = cv2.imread(image) # use: detect(,,imagePath,)
-    # custom_image = cv2.cvtColor(custom_image_bgr, cv2.COLOR_BGR2RGB)
-    # custom_image = cv2.resize(custom_image,(lib.network_width(net), lib.network_height(net)), interpolation = cv2.INTER_LINEAR)
-    # import scipy.misc
-    # custom_image = scipy.misc.imread(image)
-    # im, arr = array_to_image(custom_image)		# you should comment line below: free_image(im)
     num = c_int(0)
     pnum = pointer(num)
     predict_image(net, im)
     letter_box = 0
-    # predict_image_letterbox(net, im)
-    # letter_box = 1
-    dets = get_network_boxes(net, custom_shape[1], custom_shape[0], thresh, hier_thresh, None, 0, pnum, letter_box) # OpenCV
-    # dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, None, 0, pnum, letter_box)
+    detections = get_network_boxes(net, custom_shape[1], custom_shape[0], thresh, hier_thresh, None, 0, pnum,
+                                   letter_box)  # OpenCV
     num = pnum[0]
     if nms:
-        do_nms_sort(dets, num, meta.classes, nms)
-    res = []
-    for j in range(num):
-        for i in range(meta.classes):
-            if dets[j].prob[i] > 0:
-                b = dets[j].bbox
-                if altNames is None:
-                    nameTag = meta.names[i]
-                else:
-                    nameTag = altNames[i]
-                res.append((nameTag, dets[j].prob[i], (b.x, b.y, b.w, b.h)))
-    res = sorted(res, key=lambda x: -x[1])
-    free_detections(dets, num)
+        do_nms_sort(detections, num, meta.classes, nms)
+    res = _iter_detections(detections, meta.names, num)
+    res = sorted(res, key=lambda x: -x["confidence"])
+    free_detections(detections, num)
     return res
+
+
+def _iter_detections(detections, meta_names, num):
+    for det, _ in zip(detections, range(num)):
+        for i, (meta_name, prob) in enumerate(zip(meta_names, det.prob)):
+            b = det.bbox
+            if prob > 0:
+                yield {"class_id": i, "name": meta_name, "confidence": prob,
+                       "relative_coordinates": {"center_x": b.x, "center_y": b.y, "width": b.w, "height": b.h}}
 
 
 netMain = None

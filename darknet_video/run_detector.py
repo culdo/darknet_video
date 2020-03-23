@@ -1,5 +1,10 @@
+import time
 from threading import Thread
 
+import cv2
+
+from darknet_video.utils import gui_threading
+from multiprocessing import Manager
 from darknet_video.detector import YOLO
 from darknet_video.video import CvVideo
 
@@ -9,10 +14,14 @@ class ThreadingDetector:
         self.kwargs = kwargs
         self.url = url
 
+        self.run()
+
+    def run(self):
         cap_th = self._captrue_stream()
         detect_th = self._detect_frame()
         detect_th.start()
         cap_th.start()
+        # Thread(target=gui_threading, args=(self.stream,)).start()
         cap_th.join()
         detect_th.join()
 
@@ -28,3 +37,4 @@ class ThreadingDetector:
         def thread():
             self.stream.capture_stream(self.url, video_size=(1920, 1080))
         return Thread(target=thread)
+

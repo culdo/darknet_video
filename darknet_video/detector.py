@@ -4,19 +4,14 @@ import time
 
 import cv2
 
-from darknet_video.utils import cvDrawBoxes
+from darknet_video.utils import cv_draw_boxes
 from . import darknet
-
 
 class MetaMain:
     def __init__(self):
         self.classes = None
         self.names = None
 
-
-class SharedObject:
-    def __init__(self):
-        image = None
 
 package_dir = os.path.dirname(__file__)
 cfg_dir = os.path.join(package_dir, "cfg")
@@ -25,7 +20,10 @@ cfg_dir = os.path.join(package_dir, "cfg")
 class YOLO:
     def __init__(self, stream, weights_path,
                  config_path=None,
-                 meta_path=os.path.join(cfg_dir, "coco.data"), cv_window_size=(1100, 960)):
+                 meta_path=None,
+                 meta_file="coco.data"):
+        if meta_path is None:
+            meta_path = os.path.join(cfg_dir, meta_file)
 
         self.stream = stream
         self.config_path = config_path
@@ -42,8 +40,6 @@ class YOLO:
         # Create an image we reuse for each detect
         self.darknet_image = darknet.make_image(darknet.network_width(self.netMain),
                                                 darknet.network_height(self.netMain), 3)
-        cv2.namedWindow('Detected', cv2.WINDOW_NORMAL)
-        cv2.resizeWindow('Detected', *cv_window_size)
 
     def _load_meta(self):
         self.metaMain = MetaMain()
@@ -82,14 +78,16 @@ class YOLO:
                              os.path.abspath(self.meta_path) + "`")
 
     def detect_stream(self):
-        while self.stream.got_frame is None:
+        while self.stream.raw is None:
             time.sleep(0.001)
-        cv2.resizeWindow('Detected', *reversed(self.stream.got_frame.shape[:2]))
-        while self.stream.got_frame is not None:
+        cv2.namedWindow('Detected', cv2.WINDOW_NORMAL)
+        cv2.resizeWindow("Detected", *reversed(self.stream.raw.shape[:2]))
+        while self.stream.raw is not None:
             prev_time = time.time()
-            _, result_image = self.detect_image(self.stream.got_frame)
+            self.stream.detections, result_image = self.detect_image(self.stream.raw)
             print("FPS: %.2f" % (1 / (time.time() - prev_time)))
-            cv2.imshow('Detected', result_image)
+            self.stream.yolo_raw = result_image
+            cv2.imshow("Detected", result_image)
             cv2.waitKey(1)
 
     def detect_image(self, frame_read, thresh=0.5):
@@ -100,5 +98,5 @@ class YOLO:
         detections = darknet.detect_image(self.netMain, self.metaMain, self.darknet_image, frame_rgb.shape,
                                           thresh=thresh)
         result_img = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
-        result_gbr = cvDrawBoxes(detections, result_img)
+        result_gbr = cv_draw_boxes(detections, result_img)
         return detections, result_gbr

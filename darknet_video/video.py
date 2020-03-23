@@ -1,18 +1,15 @@
-from threading import Thread
 
 import cv2
 
 
 class CvVideo:
-    def __init__(self, cv_window_size=(1280, 720)):
-        self.got_frame = None
-
-        # cv2.namedWindow('Demo', cv2.WINDOW_NORMAL)
-        # cv2.resizeWindow('Demo', *cv_window_size)
+    def __init__(self):
+        self.raw = None
+        self.yolo_raw = None
+        self.detections = None
 
     def capture_stream(self, url=None, save_video=False, video_size=(1280, 720)):
 
-        # cv2.resizeWindow('Demo', *video_size)
         if url is None:
             cap = cv2.VideoCapture(0)
         else:
@@ -27,9 +24,7 @@ class CvVideo:
         print("Starting the YOLO loop...")
 
         while cap.isOpened():
-            ret, self.got_frame = cap.read()
-            # cv2.imshow('Demo', self.got_frame)
-            # cv2.waitKey(1)
+            ret, self.raw = cap.read()
 
         cap.release()
         if save_video:
