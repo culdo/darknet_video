@@ -10,20 +10,21 @@ from darknet_video.video import CvVideo
 
 
 class ThreadingDetector:
-    def __init__(self, url, **kwargs):
+    def __init__(self, url, forever=False, **kwargs):
         self.kwargs = kwargs
         self.url = url
 
-        self.run()
+        self.run(forever)
 
-    def run(self):
+    def run(self, forever):
         cap_th = self._captrue_stream()
         detect_th = self._detect_frame()
         detect_th.start()
         cap_th.start()
         # Thread(target=gui_threading, args=(self.stream,)).start()
-        cap_th.join()
-        detect_th.join()
+        if forever:
+            cap_th.join()
+            detect_th.join()
 
     def _detect_frame(self):
         def thread():

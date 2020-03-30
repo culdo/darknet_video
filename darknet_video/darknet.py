@@ -26,10 +26,10 @@ Windows Python 2.7 version: https://github.com/AlexeyAB/darknet/blob/fc496d52bf2
 @author: Philip Kahn
 @date: 20180503
 """
+import os
+import random
 # pylint: disable=R, W0401, W0614, W0703
 from ctypes import *
-import random
-import os
 
 
 def sample(probs):
@@ -257,7 +257,7 @@ def detect(net, meta, image, thresh=.5, hier_thresh=.5, nms=.45, debug=False):
     return ret
 
 
-def detect_image(net, meta, im, custom_shape, thresh=.5, hier_thresh=.5, nms=.45):
+def detect_image(net, meta, im, custom_shape, thresh=.5, hier_thresh=.5, nms=.45, white_list=None):
     num = c_int(0)
     pnum = pointer(num)
     predict_image(net, im)
@@ -267,19 +267,21 @@ def detect_image(net, meta, im, custom_shape, thresh=.5, hier_thresh=.5, nms=.45
     num = pnum[0]
     if nms:
         do_nms_sort(detections, num, meta.classes, nms)
-    res = _iter_detections(detections, meta.names, num)
-    res = sorted(res, key=lambda x: -x["confidence"])
+    res = _iter_detections(detections, meta.names, num, white_list)
     free_detections(detections, num)
     return res
 
 
-def _iter_detections(detections, meta_names, num):
+def _iter_detections(detections, meta_names, num, white_list):
+    objs = []
     for det, _ in zip(detections, range(num)):
         for i, (meta_name, prob) in enumerate(zip(meta_names, det.prob)):
-            b = det.bbox
-            if prob > 0:
-                yield {"class_id": i, "name": meta_name, "confidence": prob,
-                       "relative_coordinates": {"center_x": b.x, "center_y": b.y, "width": b.w, "height": b.h}}
+            if white_list is None or meta_name in white_list:
+                b = det.bbox
+                if prob > 0:
+                    objs.append({"class_id": i, "name": meta_name, "confidence": prob,
+                                 "relative_coordinates": {"center_x": b.x, "center_y": b.y, "width": b.w, "height": b.h}})
+    return objs
 
 
 netMain = None

@@ -21,9 +21,16 @@ class YOLO:
     def __init__(self, stream, weights_path,
                  config_path=None,
                  meta_path=None,
-                 meta_file="coco.data"):
+                 meta_file="coco.data",
+                 white_list=None):
         if meta_path is None:
             meta_path = os.path.join(cfg_dir, meta_file)
+        if isinstance(white_list, str):
+            self.white_list = [white_list]
+        elif isinstance(white_list, list) or white_list is None:
+            self.white_list = white_list
+        else:
+            raise AssertionError("Only Accept str and list.")
 
         self.stream = stream
         self.config_path = config_path
@@ -96,7 +103,7 @@ class YOLO:
                                    interpolation=cv2.INTER_LINEAR)
         darknet.copy_image_from_bytes(self.darknet_image, frame_resized.tobytes())
         detections = darknet.detect_image(self.netMain, self.metaMain, self.darknet_image, frame_rgb.shape,
-                                          thresh=thresh)
+                                          thresh=thresh, white_list=self.white_list)
         result_img = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
         result_gbr = cv_draw_boxes(detections, result_img)
         return detections, result_gbr

@@ -18,7 +18,7 @@ def convert_back(x, y, w, h):
     return xmin, ymin, xmax, ymax
 
 
-def cv_draw_boxes(detections, img, box_color=None):
+def cv_draw_boxes(detections, img, box_color=None, use_uid=False):
     for detection in detections:
         b = detection["relative_coordinates"]
         x, y, w, h = b["center_x"], \
@@ -29,10 +29,7 @@ def cv_draw_boxes(detections, img, box_color=None):
             float(x), float(y), float(w), float(h))
         pt1 = (xmin, ymin)
         pt2 = (xmax, ymax)
-        if box_color is None:
-            color = ImageColor.getrgb(box_colormap[detection["class_id"] % color_len])
-        else:
-            color = ImageColor.getrgb(box_color)
+        color = _choose_color(box_color, detection, use_uid)
         cv2.rectangle(img, pt1, pt2, color, 1)
         ft.putText(img=img,
                    text="%s [%s]" % (detection["name"], round(detection["confidence"] * 100, 2)),
@@ -43,6 +40,19 @@ def cv_draw_boxes(detections, img, box_color=None):
                    line_type=cv2.LINE_AA,
                    bottomLeftOrigin=True)
     return img
+
+
+def _choose_color(box_color, detection, use_uid):
+    if box_color is None:
+        if not use_uid:
+            uid = detection["class_id"]
+        else:
+            uid = detection.state.uid
+        color = ImageColor.getrgb(box_colormap[uid % color_len])
+    else:
+        color = ImageColor.getrgb(box_color)
+    color = list(reversed(color))
+    return color
 
 
 def gui_threading(stream):
