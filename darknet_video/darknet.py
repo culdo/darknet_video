@@ -279,6 +279,7 @@ def _iter_detections(detections, meta_names, num, white_list):
             if white_list is None or meta_name in white_list:
                 b = det.bbox
                 if prob > 0:
+                    print("%-5s %.2f" % (meta_name, prob))
                     objs.append({"class_id": i, "name": meta_name, "confidence": prob,
                                  "relative_coordinates": {"center_x": b.x, "center_y": b.y, "width": b.w, "height": b.h}})
     return objs

@@ -1,33 +1,44 @@
+import glob
+import threading
+import time
 
 import cv2
 
 
 class CvVideo:
     def __init__(self):
+        self.lock = threading.Lock()
         self.raw = None
         self.yolo_raw = None
-        self.detections = None
+        self.detections = []
 
-    def capture_stream(self, url=None, save_video=False, video_size=(1280, 720)):
+    def capture_stream(self, url=0, video_size=(1920, 1080)):
+        self.url = url
 
-        if url is None:
-            cap = cv2.VideoCapture(0)
+        if url.endswith(".jpg") or url.endswith(".png"):
+            img_files = sorted(glob.glob(url))
         else:
             cap = cv2.VideoCapture(url)
+            if isinstance(url, int):
+                cap.set(cv2.CAP_PROP_FRAME_WIDTH, video_size[0])
+                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, video_size[1])
 
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, video_size[0])
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, video_size[1])
+        print("Start capture.")
+        if url.endswith(".jpg") or url.endswith(".png"):
+            for i, im in enumerate(img_files):
+                with self.lock:
+                    print("%s: %s" % (i, im))
+                    im = cv2.imread(im)
+                    self._process(im)
+                time.sleep(0.001)
+            self.raw = None
+        else:
+            while cap.isOpened():
+                ret, raw = cap.read()
+                self._process(raw)
+            cap.release()
 
-        if save_video:
-            out = cv2.VideoWriter(
-                "output.avi", cv2.VideoWriter_fourcc(*"MJPG"), 10.0, self.input_size)
-        print("Starting the YOLO loop...")
-
-        while cap.isOpened():
-            ret, self.raw = cap.read()
-
-        cap.release()
-        if save_video:
-            out.release()
-
-
+    def _process(self, raw):
+        self.raw = raw
+        if self.url.startswith("/") or self.url.startswith("."):
+            time.sleep(1 / 30)

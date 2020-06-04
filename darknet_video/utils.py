@@ -32,7 +32,7 @@ def cv_draw_boxes(detections, img, box_color=None, use_uid=False):
         color = _choose_color(box_color, detection, use_uid)
         cv2.rectangle(img, pt1, pt2, color, 1)
         ft.putText(img=img,
-                   text="%s [%s]" % (detection["name"], round(detection["confidence"] * 100, 2)),
+                   text="%s [%.2f] [%d]" % (detection["name"], detection["confidence"] * 100, w*h),
                    org=(pt1[0], pt1[1] - 5),
                    fontHeight=20,
                    color=color,

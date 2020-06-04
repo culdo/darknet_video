@@ -13,7 +13,8 @@ class ThreadingDetector:
     def __init__(self, url, forever=False, **kwargs):
         self.kwargs = kwargs
         self.url = url
-
+        self.stream = CvVideo()
+        self.yolo = YOLO(self.stream, **self.kwargs)
         self.run(forever)
 
     def run(self, forever):
@@ -28,14 +29,11 @@ class ThreadingDetector:
 
     def _detect_frame(self):
         def thread():
-            yolo = YOLO(self.stream, **self.kwargs)
-            yolo.detect_stream()
+            self.yolo.detect_stream(**self.kwargs)
         return Thread(target=thread)
 
     def _captrue_stream(self):
-        self.stream = CvVideo()
-
         def thread():
-            self.stream.capture_stream(self.url, video_size=(1920, 1080))
+            self.stream.capture_stream(self.url)
         return Thread(target=thread)
 
