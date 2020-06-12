@@ -4,7 +4,8 @@ from darknet_video.thread_detector import ThreadingDetector
 
 lab_camera = "rtsp://192.168.0.60:554/user=admin&password=&channel=1&stream=0.sdp?real_stream--rtp-caching=1"
 op3_camera = "http://203.64.134.168:8080/stream?topic=/usb_cam_node/image_raw&type=ros_compressed"
-phone_camera = "http://203.64.134.168:8081/video"
+phone_rtsp = "rtsp://192.168.137.41:8080/h264_ulaw.sdp"
+phone_ip = "http://192.168.137.124:8080/video"
 darknet_path = "../../darknet/%s"
 
 v4_weights = darknet_path % "bin/yolov4.weights"
@@ -36,7 +37,8 @@ def hand_yolo(url, weights=hand_weights, **kwargs):
 
 
 if __name__ == '__main__':
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+    # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
     # hand_weights = darknet_path % "backup/enet-coco-obj_22000.weights"
-    # hand_yolo(hand_video % 0,hand_weights, thresh=0.2)
-    coco_yolo(phone_camera, thresh=0.25, show_gui=True)
+    # hand_yolo("0",hand_weights, thresh=0.2)
+    coco_yolo(phone_ip, enet_weights, thresh=0.25, show_gui=True, is_tracking=True)
+    # coco_yolo("0", enet_weights, thresh=0.25, show_gui=True, is_tracking=True)

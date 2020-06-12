@@ -1,3 +1,4 @@
+import os
 import time
 
 import cv2
@@ -7,7 +8,10 @@ box_colormap = ["NAVY", "BLUE", "AQUA", "TEAL", "OLIVE", "GREEN", "LIME", "ORANG
                 "FUCHSIA", "PURPLE", "GRAY", "SILVER"]
 color_len = len(box_colormap)
 ft = cv2.freetype.createFreeType2()  # 需要安装freetype模块 cv2' has no attribute 'freetype'
-ft.loadFontData(fontFileName='/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc', id=0)
+if os.name == 'nt':
+    ft.loadFontData(fontFileName="C:\\Windows\\Fonts\\kaiu.ttf", id=0)
+else:
+    ft.loadFontData(fontFileName='/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc', id=0)
 
 
 def convert_back(x, y, w, h):
@@ -20,23 +24,18 @@ def convert_back(x, y, w, h):
 
 def cv_draw_boxes(detections, img, box_color=None, use_uid=False):
     for detection in detections:
-        b = detection["relative_coordinates"]
-        x, y, w, h = b["center_x"], \
-                     b["center_y"], \
-                     b["width"], \
-                     b["height"]
-        xmin, ymin, xmax, ymax = convert_back(
-            float(x), float(y), float(w), float(h))
+        b = detection["coord"]
+        xmin, ymin, xmax, ymax = detection["box_xy"]
         pt1 = (xmin, ymin)
         pt2 = (xmax, ymax)
         color = _choose_color(box_color, detection, use_uid)
-        cv2.rectangle(img, pt1, pt2, color, 1)
+        cv2.rectangle(img, pt1, pt2, color, 2)
         ft.putText(img=img,
-                   text="%s [%.2f] [%d]" % (detection["name"], detection["confidence"] * 100, w*h),
+                   text="%s [%.2f] [%d]" % (detection["name"], detection["confidence"] * 100, b["w"] * b["h"]),
                    org=(pt1[0], pt1[1] - 5),
-                   fontHeight=20,
+                   fontHeight=30,
                    color=color,
-                   thickness=1,
+                   thickness=-1,
                    line_type=cv2.LINE_AA,
                    bottomLeftOrigin=True)
     return img

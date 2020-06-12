@@ -31,6 +31,8 @@ import random
 # pylint: disable=R, W0401, W0614, W0703
 from ctypes import *
 
+from .utils import convert_back
+
 
 def sample(probs):
     s = sum(probs)
@@ -280,8 +282,10 @@ def _iter_detections(detections, meta_names, num, white_list):
                 b = det.bbox
                 if prob > 0:
                     print("%-5s %.2f" % (meta_name, prob))
+                    xmin, ymin, xmax, ymax = convert_back(
+                        float(b.x), float(b.y), float(b.w), float(b.h))
                     objs.append({"class_id": i, "name": meta_name, "confidence": prob,
-                                 "relative_coordinates": {"center_x": b.x, "center_y": b.y, "width": b.w, "height": b.h}})
+                                 "coord": {"x": b.x, "y": b.y, "w": b.w, "h": b.h}, "box_xy": [xmin, ymin, xmax, ymax]})
     return objs
 
 

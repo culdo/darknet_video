@@ -12,19 +12,21 @@ class CvVideo:
         self.yolo_raw = None
         self.detections = []
 
-    def capture_stream(self, url=0, video_size=(1920, 1080)):
+    def capture_stream(self, url="0", video_size=(1920, 1080)):
         self.url = url
 
-        if url.endswith(".jpg") or url.endswith(".png"):
+        if url.endswith("*.jpg") or url.endswith("*.png"):
             img_files = sorted(glob.glob(url))
         else:
-            cap = cv2.VideoCapture(url)
-            if isinstance(url, int):
+            if url.isnumeric():
+                cap = cv2.VideoCapture(int(url))
                 cap.set(cv2.CAP_PROP_FRAME_WIDTH, video_size[0])
                 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, video_size[1])
+            else:
+                cap = cv2.VideoCapture(url)
 
         print("Start capture.")
-        if url.endswith(".jpg") or url.endswith(".png"):
+        if url.endswith("*.jpg") or url.endswith("*.png"):
             for i, im in enumerate(img_files):
                 with self.lock:
                     print("%s: %s" % (i, im))
@@ -33,10 +35,12 @@ class CvVideo:
                 time.sleep(0.001)
             self.raw = None
         else:
-            while cap.isOpened():
-                ret, raw = cap.read()
-                self._process(raw)
-            cap.release()
+            try:
+                while cap.isOpened():
+                    ret, raw = cap.read()
+                    self._process(raw)
+            finally:
+                cap.release()
 
     def _process(self, raw):
         self.raw = raw
