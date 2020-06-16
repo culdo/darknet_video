@@ -1,8 +1,9 @@
 import os
-
-import torch
-from SiamMask.tools.test import *
 import SiamMask.experiments.siammask_sharp as model
+from SiamMask.tools.test import *
+from SiamMask.utils.config_helper import load_config
+from SiamMask.utils.load_helper import load_pretrain
+from SiamMask.experiments.siammask_sharp.custom import Custom
 
 
 class SiamMask:
@@ -21,7 +22,6 @@ class SiamMask:
         torch.backends.cudnn.benchmark = True
         # Setup Model
         self.cfg = load_config(args)
-        from experiments.siammask_sharp.custom import Custom
         siammask = Custom(anchors=self.cfg['anchors'])
         self.siammask = load_pretrain(siammask, args.resume)
 
@@ -33,9 +33,12 @@ class SiamMask:
         target_sz = np.array([w, h])
         self.state = siamese_init(frame, target_pos, target_sz, self.siammask, self.cfg['hp'], device=self.device)
 
-    def track(self, img):
+    def track(self, img, draw_rect=False):
         if self.state is not None:
-            self.state = siamese_track(self.state, img, mask_enable=True, refine_enable=True, device=self.device)  # track
+            self.state = siamese_track(self.state, img, mask_enable=True, refine_enable=True,
+                                       device=self.device)  # track
             location = self.state['ploygon'].flatten()
             mask = self.state['mask'] > self.state['p'].seg_thr
             img[:, :, 2] = (mask > 0) * 255 + (mask == 0) * img[:, :, 2]
+            if draw_rect:
+                cv2.rectangle(img, cv2.boundingRect(np.uint8(mask)), (255, 0, 0))

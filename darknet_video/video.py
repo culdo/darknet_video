@@ -1,4 +1,5 @@
 import glob
+import os
 import threading
 import time
 
@@ -16,7 +17,10 @@ class CvVideo:
         self.url = url
 
         if url.endswith("*.jpg") or url.endswith("*.png"):
+            if not os.path.exists(os.path.dirname(url)):
+                url = os.path.join("../../darknet/data", url)
             img_files = sorted(glob.glob(url))
+            print(img_files)
         else:
             if url.isnumeric():
                 cap = cv2.VideoCapture(int(url))

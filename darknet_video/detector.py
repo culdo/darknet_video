@@ -7,7 +7,6 @@ import cv2
 import numpy as np
 
 from darknet_video.utils import cv_draw_boxes
-from tracking import SiamMask
 from . import darknet
 
 
@@ -15,10 +14,6 @@ class MetaMain:
     def __init__(self):
         self.classes = None
         self.names = None
-
-
-package_dir = os.path.dirname(__file__)
-cfg_dir = os.path.join(package_dir, "cfg")
 
 
 class YOLO:
@@ -29,11 +24,12 @@ class YOLO:
                  thresh=0.25,
                  white_list=None,
                  show_gui=False,
-                 is_tracking=False):
+                 is_tracking=False,
+                 darknet_dir="../../darknet",
+                 **kwargs):
+        self.darknet_dir = darknet_dir
         self.thresh = thresh
         self.show_gui = show_gui
-        if meta_path is None:
-            meta_path = os.path.join(cfg_dir, meta_file)
         if isinstance(white_list, str):
             self.white_list = [white_list]
         elif isinstance(white_list, list) or white_list is None:
@@ -45,14 +41,17 @@ class YOLO:
         self.config_path = config_path
         self.weights_path = weights_path
         self.meta_path = meta_path
+        self.meta_file = meta_file
         self.is_tracking = is_tracking
         if is_tracking:
+            from .tracking import SiamMask
             self.sm = SiamMask()
 
         self._check_path()
 
+        # Load neural network
         self.netMain = darknet.load_net_custom(self.config_path.encode(
-            "ascii"), weights_path.encode("ascii"), 0, 1)  # batch size = 1
+            "ascii"), self.weights_path.encode("ascii"), 0, 1)  # batch size = 1
         self.input_size = (darknet.network_width(self.netMain), darknet.network_height(self.netMain))
 
         self._load_meta()
@@ -79,21 +78,30 @@ class YOLO:
                 self.metaMain.classes = int(classes.group(1))
             if names:
                 result = names.group(1)
-                result = os.path.join(package_dir, result)
+                result = os.path.join(self.darknet_dir, result)
                 print(result)
-                if os.path.exists(result):
-                    with open(result, encoding='utf8') as namesFH:
-                        namesList = namesFH.read().strip().split("\n")
-                        self.metaMain.names = [x.strip() for x in namesList]
-            else:
-                raise AssertionError("Not found names file.")
+                with open(result, encoding='utf8') as namesFH:
+                    namesList = namesFH.read().strip().split("\n")
+                    self.metaMain.names = [x.strip() for x in namesList]
 
     def _check_path(self):
+        package_dir = os.path.dirname(__file__)
+        self.darknet_dir = os.path.join(package_dir, self.darknet_dir)
+        if not os.path.exists(self.darknet_dir):
+            self.darknet_dir = package_dir
+
+        if self.meta_path is None:
+            self.meta_path = os.path.join(self.darknet_dir, "data", self.meta_file)
+
         if self.config_path is None:
             weight_name = os.path.basename(self.weights_path)
-            self.config_path = os.path.join(cfg_dir, "%s.cfg" % os.path.splitext(weight_name)[0])
-        else:
-            self.config_path = os.path.join(cfg_dir, "%s.cfg" % self.config_path)
+            self.config_path = "%s.cfg" % os.path.splitext(weight_name)[0]
+
+        if os.path.dirname(self.config_path) == "":
+            self.config_path = os.path.join(self.darknet_dir, "cfg", self.config_path)
+
+        self.weights_path = os.path.join(self.darknet_dir, "bin", self.weights_path)
+        print(self.weights_path)
 
         if not os.path.exists(self.config_path):
             raise ValueError("Invalid config path `" +
@@ -113,15 +121,15 @@ class YOLO:
                     if event == cv2.EVENT_LBUTTONDOWN:
                         self.picked_class = d["class_id"]
                     self.picked_det = d
-            if self.is_tracking and event == cv2.EVENT_LBUTTONDBLCLK and self.picked_det is not None:
+            if event == cv2.EVENT_LBUTTONDBLCLK and self.is_tracking and self.picked_det is not None:
                 c = self.picked_det["coord"]
                 self.sm.init_roi(self.stream.raw, c["x"], c["y"], c["w"], c["h"])
         elif event == cv2.EVENT_RBUTTONDOWN:
             self.picked_class = None
             self.picked_det = None
 
-    def detect_stream(self, save_video=False, pseudo_label=False, video_size=(1280, 720), fps=30.0, fpath="output",
-                      **kwargs):
+    def detect_stream(self, save_video=False, pseudo_label=False, video_size=(1280, 720),
+                      fps=30.0, fpath="output", interval=1, **kwargs):
 
         if self.show_gui:
             cv2.namedWindow('Detected', cv2.WINDOW_NORMAL)
@@ -145,11 +153,20 @@ class YOLO:
                 self.stream.yolo_raw = cv_draw_boxes(dets, frame)
                 print("\nFPS:   %.2f" % (1 / (time.time() - prev_time)))
                 if save_video:
-                    out.write(self.stream.yolo_raw)
+                    h, w = self.stream.yolo_raw.shape
+                    if w >= h:
+                        factor = 1280 / w
+                    else:
+                        factor = 720 / h
+                    vid_f = cv2.resize(self.stream.yolo_raw, (1280, 720))
+
+                    out.write(vid_f)
                 if self.show_gui:
                     cv2.imshow("Detected", self.stream.yolo_raw)
-                    key = cv2.waitKey(1)
+                    key = cv2.waitKey(interval)
             time.sleep(0.001)
+        if save_video:
+            out.release()
 
     def _check_whitelist(self):
         for d in self.stream.detections:
