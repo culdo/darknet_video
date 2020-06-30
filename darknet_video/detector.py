@@ -35,7 +35,7 @@ class YOLO:
         elif isinstance(white_list, list) or white_list is None:
             self.white_list = white_list
         else:
-            raise AssertionError("Only Accept str and list.")
+            raise AssertionError("white_list only accept str and list.")
 
         self.stream = stream
         self.config_path = config_path
@@ -46,6 +46,7 @@ class YOLO:
         if is_tracking:
             from .tracking import SiamMask
             self.sm = SiamMask()
+            self.is_pressed_shift = False
 
         self._check_path()
 
@@ -58,8 +59,8 @@ class YOLO:
         # Create an image we reuse for each detect
         self.darknet_image = darknet.make_image(darknet.network_width(self.netMain),
                                                 darknet.network_height(self.netMain), 3)
-        self.picked_class = None
-        self.picked_det = None
+        self._reset_pick_classes()
+
         if os.name != 'nt':
             subprocess.call("notify-send -i %s -t %d %s %s"
                             % ("/home/lab-pc1/nptu/lab/computer_vision/darknets/service/darknet_notext.png",
@@ -78,7 +79,7 @@ class YOLO:
                 self.metaMain.classes = int(classes.group(1))
             if names:
                 result = names.group(1)
-                result = os.path.join(self.darknet_dir, result)
+                result = os.path.join(os.path.dirname(__file__), result)
                 print(result)
                 with open(result, encoding='utf8') as namesFH:
                     namesList = namesFH.read().strip().split("\n")
@@ -87,20 +88,18 @@ class YOLO:
     def _check_path(self):
         package_dir = os.path.dirname(__file__)
         self.darknet_dir = os.path.join(package_dir, self.darknet_dir)
-        if not os.path.exists(self.darknet_dir):
-            self.darknet_dir = package_dir
 
         if self.meta_path is None:
-            self.meta_path = os.path.join(self.darknet_dir, "data", self.meta_file)
+            self.meta_path = os.path.join(package_dir, "data", self.meta_file)
 
         if self.config_path is None:
             weight_name = os.path.basename(self.weights_path)
             self.config_path = "%s.cfg" % os.path.splitext(weight_name)[0]
 
         if os.path.dirname(self.config_path) == "":
-            self.config_path = os.path.join(self.darknet_dir, "cfg", self.config_path)
+            self.config_path = os.path.join(package_dir, "cfg", self.config_path)
 
-        self.weights_path = os.path.join(self.darknet_dir, "bin", self.weights_path)
+        self.weights_path = os.path.join(self.darknet_dir, self.weights_path)
         print(self.weights_path)
 
         if not os.path.exists(self.config_path):
@@ -113,20 +112,24 @@ class YOLO:
             raise ValueError("Invalid data file path `" +
                              os.path.abspath(self.meta_path) + "`")
 
-    def pick_class(self, event, x, y, flags, param):
+    def _pick_class(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN or event == cv2.EVENT_LBUTTONDBLCLK:
             for d in self.stream.detections:
                 xmin, ymin, xmax, ymax = d["box_xy"]
                 if xmin < x < xmax and ymin < y < ymax:
-                    if event == cv2.EVENT_LBUTTONDOWN:
-                        self.picked_class = d["class_id"]
                     self.picked_det = d
-            if event == cv2.EVENT_LBUTTONDBLCLK and self.is_tracking and self.picked_det is not None:
-                c = self.picked_det["coord"]
-                self.sm.init_roi(self.stream.raw, c["x"], c["y"], c["w"], c["h"])
+        if event == cv2.EVENT_LBUTTONDOWN:
+            if self.picked_det is not None:
+                self.picked_classes.add(self.picked_det["name"])
+        if event == cv2.EVENT_LBUTTONDBLCLK and self.is_tracking and self.picked_det is not None:
+            c = self.picked_det["coord"]
+            self.sm.init_roi(self.stream.raw, c["x"], c["y"], c["w"], c["h"])
         elif event == cv2.EVENT_RBUTTONDOWN:
-            self.picked_class = None
-            self.picked_det = None
+            self._reset_pick_classes()
+
+    def _reset_pick_classes(self):
+        self.picked_classes = set()
+        self.picked_det = None
 
     def detect_stream(self, save_video=False, pseudo_label=False, video_size=(1280, 720),
                       fps=30.0, fpath="output", interval=1, **kwargs):
@@ -134,7 +137,7 @@ class YOLO:
         if self.show_gui:
             cv2.namedWindow('Detected', cv2.WINDOW_NORMAL)
             cv2.resizeWindow("Detected", *video_size)
-            cv2.setMouseCallback('Detected', self.pick_class)
+            cv2.setMouseCallback('Detected', self._pick_class)
         if save_video:
             out = cv2.VideoWriter(
                 "%s.mp4" % fpath, cv2.VideoWriter_fourcc(*'mp4v'), fps, video_size)
@@ -150,8 +153,8 @@ class YOLO:
                 dets = self._check_whitelist()
                 if self.is_tracking and self.picked_det:
                     self.sm.track(frame)
-                self.stream.yolo_raw = cv_draw_boxes(dets, frame)
                 print("\nFPS:   %.2f" % (1 / (time.time() - prev_time)))
+                self.stream.yolo_raw = cv_draw_boxes(dets, frame)
                 if save_video:
                     h, w = self.stream.yolo_raw.shape
                     if w >= h:
@@ -164,14 +167,25 @@ class YOLO:
                 if self.show_gui:
                     cv2.imshow("Detected", self.stream.yolo_raw)
                     key = cv2.waitKey(interval)
+                    print("key: %s" % key)
+                    if self.is_tracking and key == 225:
+                        self.select_roi()
+
             time.sleep(0.001)
         if save_video:
             out.release()
 
+    def select_roi(self):
+        self.picked_det = True
+        frame = self.stream.raw.copy()
+        x, y, w, h = cv2.selectROI('Detected', frame, False, False)
+        self.sm.init_roi(frame, x + w / 2, y + h / 2, w, h)
+        cv2.setMouseCallback('Detected', self._pick_class)
+
     def _check_whitelist(self):
         for d in self.stream.detections:
-            if d["class_id"] == self.picked_class or \
-                    self.picked_class is None:
+            if d["name"] in self.picked_classes or \
+                    len(self.picked_classes) == 0:
                 yield d
 
     def detect_image(self, img):

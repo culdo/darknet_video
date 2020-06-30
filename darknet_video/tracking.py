@@ -1,9 +1,10 @@
 import os
+
 import SiamMask.experiments.siammask_sharp as model
+from SiamMask.experiments.siammask_sharp.custom import Custom
 from SiamMask.tools.test import *
 from SiamMask.utils.config_helper import load_config
 from SiamMask.utils.load_helper import load_pretrain
-from SiamMask.experiments.siammask_sharp.custom import Custom
 
 
 class SiamMask:
@@ -42,3 +43,28 @@ class SiamMask:
             img[:, :, 2] = (mask > 0) * 255 + (mask == 0) * img[:, :, 2]
             if draw_rect:
                 cv2.rectangle(img, cv2.boundingRect(np.uint8(mask)), (255, 0, 0))
+
+    def _cb_mouse(self, event, x, y, flags, param):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            x, y, w, h = cv2.selectROI('SiamMask', self.frame, False, False)
+            self.init_roi(self.frame, x, y, w, h)
+
+    def run_along(self, url):
+        cap = cv2.VideoCapture(url)
+
+        cv2.namedWindow('SiamMask', cv2.WINDOW_NORMAL)
+        cv2.setMouseCallback('SiamMask', self._cb_mouse)
+
+        while cap.isOpened():
+            self.frame = cap.read()
+            self.track(self.frame)
+            cv2.imshow('SiamMask', self.frame)
+            key = cv2.waitKey(1)
+            if key > 0:
+                break
+
+
+if __name__ == '__main__':
+    phone_ip = "http://192.168.0.249:8080/video"
+    sm = SiamMask()
+    sm.run_along(phone_ip)

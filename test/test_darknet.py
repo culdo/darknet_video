@@ -1,21 +1,22 @@
-import os
-
 from darknet_video.thread_detector import ThreadingDetector
 
-lab_camera = "rtsp://192.168.0.60:554/user=admin&password=&channel=1&stream=0.sdp?real_stream--rtp-caching=1"
-op3_camera = "http://203.64.134.168:8080/stream?topic=/usb_cam_node/image_raw&type=ros_compressed"
-phone_rtsp = "rtsp://192.168.137.41:8080/h264_ulaw.sdp"
-phone_ip = "http://192.168.0.249:8080/video"
+outdoor_lab = "rtsp://192.168.0.61:554/user=admin&password=&channel=1&stream=0.sdp?real_stream--rtp-caching=1"
+# indoor_lab = "rtsp://203.64.134.168:554/user=admin&password=&channel=1&stream=0.sdp?real_stream--rtp-caching=1"
+indoor_lab = "rtsp://192.168.0.60:554/user=admin&password=&channel=1&stream=0.sdp?real_stream--rtp-caching=1"
+op3_camera = "http://203.64.134.168:8084/stream?topic=/usb_cam_node/image_raw&type=ros_compressed"
+gg_phone_ip = "http://192.168.0.170:8080/video"
+# phone_ip = "http://192.168.0.249:8080/video"
 
-v4_weights = "yolov4.weights"
-v3tiny_weights = "yolov3-tiny.weights"
-enet_weights = "enet-coco.weights"
-hand_weights = "backup/enet-coco-obj_final.weights"
+v4_weights = "bin/yolov4.weights"
+v4tiny_weights = "bin/yolov4-tiny.weights"
+v3tiny_weights = "bin/yolov3-tiny.weights"
+enet_weights = "bin/enet-coco.weights"
+hand_weights = "backup/enet-hand.weights"
 # hand_video = "/home/lab-pc1/nptu/lab/ip_cam/videos/hands/0.mp4"
 hand_video = "hands/%s.mp4"
 mango_img = "mango_dev/*.jpg"
-mango_weights = "mango/608v4weights/yolov4_final.weights"
-mango_config = "yolov4-mango.cfg"
+mango_weights = "backup/enet-mango.weights"
+mango_config = "enet-mango.cfg"
 mango_data = "mango.data"
 
 
@@ -49,6 +50,6 @@ def mango_yolo(url, weights=mango_weights, **kwargs):
 if __name__ == '__main__':
     # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
     # hand_weights = darknet_path % "backup/enet-coco-obj_22000.weights"
-    # hand_yolo("0",hand_weights, thresh=0.2)
-    # coco_yolo(phone_ip, enet_weights, thresh=0.25, show_gui=True, is_tracking=True)
-    mango_yolo(mango_img, mango_weights, save_video=True)
+    # hand_yolo(op3_camera, hand_weights, thresh=0.2, show_gui=True, is_tracking=True)
+    # coco_yolo(op3_camera, v4_weights, thresh=0.25, show_gui=True)
+    mango_yolo(gg_phone_ip, mango_weights, thresh=0.25, show_gui=True)
