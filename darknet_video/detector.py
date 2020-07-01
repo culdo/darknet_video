@@ -140,40 +140,46 @@ class YOLO:
             cv2.setMouseCallback('Detected', self._pick_class)
         if save_video:
             out = cv2.VideoWriter(
-                "%s.mp4" % fpath, cv2.VideoWriter_fourcc(*'mp4v'), fps, video_size)
+                "%s.mp4" % fpath, cv2.VideoWriter_fourcc(*'MP4V'), fps, video_size)
         while self.stream.raw is None:
             time.sleep(0.001)
 
         print("Start detecting.")
-        while self.stream.raw is not None:
-            with self.stream.lock:
-                prev_time = time.time()
-                frame = np.copy(self.stream.raw)
-                self.stream.detections = self.detect_image(frame)
-                dets = self._check_whitelist()
-                if self.is_tracking and self.picked_det:
-                    self.sm.track(frame)
-                print("\nFPS:   %.2f" % (1 / (time.time() - prev_time)))
-                self.stream.yolo_raw = cv_draw_boxes(dets, frame)
-                if save_video:
-                    h, w = self.stream.yolo_raw.shape
-                    if w >= h:
-                        factor = 1280 / w
-                    else:
-                        factor = 720 / h
-                    vid_f = cv2.resize(self.stream.yolo_raw, (1280, 720))
+        try:
+            while self.stream.raw is not None:
+                with self.stream.lock:
+                    prev_time = time.time()
+                    frame = np.copy(self.stream.raw)
+                    self.stream.detections = self.detect_image(frame)
+                    dets = self._check_whitelist()
+                    if self.is_tracking and self.picked_det:
+                        self.sm.track(frame)
+                    print("\nFPS:   %.2f" % (1 / (time.time() - prev_time)))
+                    yolo_raw = cv_draw_boxes(dets, frame)
+                    self.stream.yolo_raw = cv2.imencode(".jpeg", frame, (cv2.IMWRITE_JPEG_QUALITY, 90))[1]
 
-                    out.write(vid_f)
-                if self.show_gui:
-                    cv2.imshow("Detected", self.stream.yolo_raw)
-                    key = cv2.waitKey(interval)
-                    print("key: %s" % key)
-                    if self.is_tracking and key == 225:
-                        self.select_roi()
+                    if save_video:
+                        # h, w, _ = yolo_raw.shape
+                        # if w >= h:
+                        #     factor = 1280 / w
+                        # else:
+                        #     factor = 720 / h
+                        # vid_f = cv2.resize(yolo_raw, (1280, 720))
 
-            time.sleep(0.001)
-        if save_video:
-            out.release()
+                        out.write(yolo_raw)
+                    if self.show_gui:
+                        cv2.imshow("Detected", yolo_raw)
+                        key = cv2.waitKey(interval)
+                        if self.is_tracking and key == 225:
+                            self.select_roi()
+                        elif key == ord('q'):
+                            self.stream.yolo_raw = "quit"
+                            break
+
+                time.sleep(0.001)
+        finally:
+            if save_video:
+                out.release()
 
     def select_roi(self):
         self.picked_det = True

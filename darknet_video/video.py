@@ -40,10 +40,11 @@ class CvVideo:
             self.raw = None
         else:
             try:
-                while cap.isOpened():
+                while cap.isOpened() and self.raw != "quit":
                     ret, raw = cap.read()
                     self._process(raw)
             finally:
+                self.raw = None
                 cap.release()
 
     def _process(self, raw):
