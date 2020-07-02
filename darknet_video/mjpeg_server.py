@@ -49,6 +49,6 @@ class RequestHandler(BaseHTTPRequestHandler):
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     def __init__(self, port=8091):
-        HTTPServer.__init__(self, ("0.0.0.0", port), RequestHandler)
+        super().__init__(("0.0.0.0", port), RequestHandler)
         print("Listening on Port " + str(port) + "...")
         self.maxfps = 0
