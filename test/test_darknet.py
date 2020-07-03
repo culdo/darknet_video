@@ -48,5 +48,6 @@ if __name__ == '__main__':
     # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
     # hand_weights = darknet_path % "backup/enet-coco-obj_22000.weights"
     # hand_yolo(op3_camera, hand_weights, thresh=0.2, show_gui=True, is_tracking=True)
-    coco_yolo(indoor_lab, v4_weights, thresh=0.25, show_gui=True, is_stream_result=True, overlap_thresh=0.45)
+    coco_yolo(indoor_lab, v4_weights, thresh=0.25, show_gui=True, is_stream_result=True, obj_size=[60000, 70000],
+              overlap_thresh=0.45)
     # mango_yolo(gg_phone_ip, mango_weights, thresh=0.25, show_gui=True)
