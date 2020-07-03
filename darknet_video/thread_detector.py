@@ -11,7 +11,7 @@ class ThreadingDetector:
         self.is_stream_result = is_stream_result
         self.url = url
         self.stream = CvVideo()
-        self.yolo = YOLODetector(self.stream, **self.kwargs)
+        self.yolo = YOLODetector(self.stream, is_stream_result=is_stream_result, **self.kwargs)
         self._run()
 
     def _run(self):

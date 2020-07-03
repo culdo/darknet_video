@@ -4,8 +4,9 @@ outdoor_lab = "rtsp://192.168.0.61:554/user=admin&password=&channel=1&stream=0.s
 # indoor_lab = "rtsp://203.64.134.168:554/user=admin&password=&channel=1&stream=0.sdp?real_stream--rtp-caching=1"
 indoor_lab = "rtsp://192.168.0.60:554/user=admin&password=&channel=1&stream=0.sdp?real_stream--rtp-caching=1"
 op3_camera = "http://203.64.134.168:8084/stream?topic=/usb_cam_node/image_raw&type=ros_compressed"
-gg_phone_ip = "http://192.168.0.170:8080/video"
+gg_phone_ip = "http://203.64.134.168:8000/video"
 phone_ip = "http://192.168.0.249:8080/video"
+wan_phone_ip = "http://203.64.134.168:8082/video"
 
 v4_weights = "bin/yolov4.weights"
 v4tiny_weights = "bin/yolov4-tiny.weights"
@@ -15,7 +16,7 @@ hand_weights = "backup/enet-hand.weights"
 # hand_video = "/home/lab-pc1/nptu/lab/ip_cam/videos/hands/0.mp4"
 hand_video = "hands/%s.mp4"
 mango_img = "mango_dev/*.jpg"
-mango_weights = "backup/enet-mango.weights"
+mango_weights = "backup/yolov4-mango_best.weights"
 mango_config = "enet-mango.cfg"
 mango_data = "mango.data"
 
@@ -48,6 +49,7 @@ if __name__ == '__main__':
     # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
     # hand_weights = darknet_path % "backup/enet-coco-obj_22000.weights"
     # hand_yolo(op3_camera, hand_weights, thresh=0.2, show_gui=True, is_tracking=True)
-    coco_yolo(phone_ip, v4_weights, thresh=0.25, show_gui=True, is_stream_result=True, obj_size=[60000, 70000],
+    coco_yolo(wan_phone_ip, v4_weights, thresh=0.25, show_gui=True, is_stream_result=True,
               overlap_thresh=0.45)
-    # mango_yolo(gg_phone_ip, mango_weights, thresh=0.25, show_gui=True)
+    # mango_yolo(wan_phone_ip, mango_weights, thresh=0.25, show_gui=False, is_stream_result=True, obj_size=[60000, 70000],
+    #           overlap_thresh=0.45)
