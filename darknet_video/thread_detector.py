@@ -1,30 +1,31 @@
 from threading import Thread
+
 from darknet_video.detector import YOLODetector
 from darknet_video.mjpeg_server import ThreadingHTTPServer
 from darknet_video.video import CvVideo
 
 
 class ThreadingDetector:
-    def __init__(self, url, is_forever=False, **kwargs):
+    def __init__(self, url, is_stream_result=False, **kwargs):
         self.kwargs = kwargs
+        self.is_stream_result = is_stream_result
         self.url = url
         self.stream = CvVideo()
         self.yolo = YOLODetector(self.stream, **self.kwargs)
-        self.server = ThreadingHTTPServer()
-        self.run(is_forever)
+        self._run()
 
-    def run(self, forever):
+    def _run(self):
         cap_th = self._captrue_stream()
-        detect_th = self._detect_frame()
-        server_th = self._stream_yolo()
-        detect_th.start()
         cap_th.start()
-        server_th.start()
-        # Thread(target=gui_threading, args=(self.stream,)).start()
-        if forever:
-            cap_th.join()
-            detect_th.join()
+        detect_th = self._detect_frame()
+        detect_th.start()
+        if self.is_stream_result:
+            self.server = ThreadingHTTPServer()
+            server_th = self._result_stream()
+            server_th.start()
             server_th.join()
+        detect_th.join()
+        cap_th.join()
 
     def _detect_frame(self):
         def thread():
@@ -38,7 +39,7 @@ class ThreadingDetector:
 
         return Thread(target=thread)
 
-    def _stream_yolo(self):
+    def _result_stream(self):
         def thread():
             self.server.stream = self.stream
             self.server.serve_forever()

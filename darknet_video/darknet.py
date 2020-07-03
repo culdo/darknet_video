@@ -31,7 +31,7 @@ import random
 # pylint: disable=R, W0401, W0614, W0703
 from ctypes import *
 
-from .utils import convert_back
+from darknet_video.utils.common import convert_back
 
 
 def sample(probs):
@@ -259,7 +259,8 @@ def detect(net, meta, image, thresh=.5, hier_thresh=.5, nms=.45, debug=False):
     return ret
 
 
-def detect_image(net, meta, im, custom_shape, thresh=.5, hier_thresh=.5, nms=.45, white_list=None, obj_size=None):
+def detect_image(net, meta, im, custom_shape, thresh=.5, hier_thresh=.5, nms=.45, white_list=None, obj_size=None,
+                 **kwargs):
     num = c_int(0)
     pnum = pointer(num)
     predict_image(net, im)
@@ -283,6 +284,7 @@ def _iter_detections(detections, meta_names, num, white_list, obj_size):
         raise AssertionError("white_list only accept str and list.")
 
     objs = []
+    nms_box = []
     for det, _ in zip(detections, range(num)):
         for i, (meta_name, prob) in enumerate(zip(meta_names, det.prob)):
             if white_list is None or meta_name in white_list:
@@ -293,7 +295,8 @@ def _iter_detections(detections, meta_names, num, white_list, obj_size):
                         float(b.x), float(b.y), float(b.w), float(b.h))
                     objs.append({"class_id": i, "name": meta_name, "confidence": prob,
                                  "coord": {"x": b.x, "y": b.y, "w": b.w, "h": b.h}, "box_xy": [xmin, ymin, xmax, ymax]})
-    return objs
+                    nms_box.append([xmin, ymin, xmax, ymax, prob])
+    return objs, nms_box
 
 
 netMain = None

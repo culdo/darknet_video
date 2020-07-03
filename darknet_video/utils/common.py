@@ -2,7 +2,10 @@ import os
 import time
 
 import cv2
+import numpy as np
 from PIL import ImageColor
+
+from darknet_video.utils.nms import py_cpu_nms
 
 box_colormap = ["NAVY", "BLUE", "AQUA", "TEAL", "OLIVE", "GREEN", "LIME", "ORANGE", "RED", "MAROON",
                 "FUCHSIA", "PURPLE", "GRAY", "SILVER"]
@@ -39,6 +42,26 @@ def cv_draw_boxes(detections, img, box_color=None, use_uid=False):
                    line_type=cv2.LINE_AA,
                    bottomLeftOrigin=True)
     return img
+
+
+def cv_draw_fps(fps, img):
+    ft.putText(img=img,
+               text="FPS %s" % fps,
+               org=(img.shape[1], 0),
+               fontHeight=30,
+               color=(0, 255, 0),
+               thickness=-1,
+               line_type=cv2.LINE_AA,
+               bottomLeftOrigin=False)
+    return img
+
+
+def all_nms(dets, box_arr, overlapThresh):
+    box_arr = np.array(box_arr)
+    pick = py_cpu_nms(box_arr, overlapThresh)
+    for i, det in enumerate(dets):
+        if i in pick:
+            yield det
 
 
 def _choose_color(box_color, detection, use_uid):

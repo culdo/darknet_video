@@ -11,7 +11,7 @@ class CvVideo:
         self.lock = threading.Lock()
         self.raw = None
         self.yolo_raw = None
-        self.detections = []
+        self.detections = [], []
 
     def capture_stream(self, url="0", video_size=(1920, 1080)):
         self.url = url

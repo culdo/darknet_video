@@ -6,7 +6,7 @@ import time
 import cv2
 import numpy as np
 
-from darknet_video.utils import cv_draw_boxes
+from darknet_video.utils.common import cv_draw_boxes, cv_draw_fps, all_nms
 from . import darknet
 
 
@@ -24,7 +24,9 @@ class YOLODetector:
                  show_gui=False,
                  is_tracking=False,
                  darknet_dir="../../darknet",
+                 is_stream_result=False,
                  **kwargs):
+        self.is_stream_result = is_stream_result
         self.darknet_dir = darknet_dir
         self.kwargs = kwargs
         self.show_gui = show_gui
@@ -38,7 +40,7 @@ class YOLODetector:
         if is_tracking:
             from .tracking import SiamMask
             self.sm = SiamMask()
-            self.is_pressed_shift = False
+            self._is_pressed_shift = False
 
         self._check_path()
 
@@ -123,7 +125,7 @@ class YOLODetector:
         self.picked_classes = set()
         self.picked_det = None
 
-    def detect_stream(self, save_video=False, pseudo_label=False, video_size=(1280, 720),
+    def detect_stream(self, save_video=False, pseudo_label=False, video_size=(1280, 720), overlap_thresh=None,
                       fps=30.0, fpath="output", interval=1, **kwargs):
 
         if self.show_gui:
@@ -142,36 +144,38 @@ class YOLODetector:
                 with self.stream.lock:
                     prev_time = time.time()
                     frame = np.copy(self.stream.raw)
-                    self.stream.detections = self.detect_image(frame)
-                    dets = self._check_whitelist()
+                    dets, nms_box = self.detect_image(frame)
+                    if overlap_thresh:
+                        dets = all_nms(dets, nms_box, overlap_thresh)
+                    dets = self._check_whitelist(dets)
                     if self.is_tracking and self.picked_det:
                         self.sm.track(frame)
-                    print("\nFPS:   %.2f" % (1 / (time.time() - prev_time)))
-                    yolo_raw = cv_draw_boxes(dets, frame)
-                    self.stream.yolo_raw = cv2.imencode(".jpeg", frame, (cv2.IMWRITE_JPEG_QUALITY, 90))[1]
+                    fps = 1 / (time.time() - prev_time)
+                    print("\nFPS:   %.2f" % fps)
+                    frame = cv_draw_boxes(dets, frame)
+                    yolo_raw = cv_draw_fps(fps, frame)
+                    self.stream.detections = yolo_raw
+                    if self.is_stream_result:
+                        self.stream.yolo_raw = cv2.imencode(".jpeg", yolo_raw, (cv2.IMWRITE_JPEG_QUALITY, 90))[1]
 
                     if save_video:
-                        # h, w, _ = yolo_raw.shape
-                        # if w >= h:
-                        #     factor = 1280 / w
-                        # else:
-                        #     factor = 720 / h
-                        # vid_f = cv2.resize(yolo_raw, (1280, 720))
-
-                        out.write(yolo_raw)
-                    if self.show_gui:
-                        cv2.imshow("Detected", yolo_raw)
-                        key = cv2.waitKey(interval)
-                        if self.is_tracking and key == 225:
-                            self.select_roi()
-                        elif key == ord('q'):
-                            self.stream.yolo_raw = "quit"
-                            break
+                        self._save_video(out, yolo_raw)
+                    if self.show_gui and self._check_gui(yolo_raw, interval) == "q":
+                        break
 
                 time.sleep(0.001)
         finally:
             if save_video:
                 out.release()
+
+    def _save_video(self, out, yolo_raw):
+        h, w, _ = yolo_raw.shape
+        if w >= h:
+            factor = 1280 / w
+        else:
+            factor = 720 / h
+        vid_f = cv2.resize(yolo_raw, (1280, 720))
+        out.write(yolo_raw)
 
     def select_roi(self):
         self.picked_det = True
@@ -180,8 +184,8 @@ class YOLODetector:
         self.sm.init_roi(frame, x + w / 2, y + h / 2, w, h)
         cv2.setMouseCallback('Detected', self._pick_class)
 
-    def _check_whitelist(self):
-        for d in self.stream.detections:
+    def _check_whitelist(self, dets):
+        for d in dets:
             if d["name"] in self.picked_classes or \
                     len(self.picked_classes) == 0:
                 yield d
@@ -201,3 +205,12 @@ class YOLODetector:
         cv2.imsave("%s.jpg" % label_path, self.frame_rgb)
         with open("%s.txt" % label_path, 'w') as f:
             f.write("%s %.4f %.4f %.4f %.4f" % (label, b["x"], b["y"], b["w"], b["h"]))
+
+    def _check_gui(self, yolo_raw, interval):
+        cv2.imshow("Detected", yolo_raw)
+        key = cv2.waitKey(interval)
+        if self.is_tracking and key == 225:
+            self.select_roi()
+        elif key == ord('q'):
+            self.stream.yolo_raw = "quit"
+            return "q"

@@ -22,7 +22,6 @@ mango_data = "mango.data"
 
 def coco_yolo(url, weights=v4_weights, show_gui=True, **kwargs):
     ThreadingDetector(url,
-                      is_forever=True,
                       weights_path=weights,
                       meta_file="coco_cht.data",
                       show_gui=show_gui,
@@ -31,7 +30,6 @@ def coco_yolo(url, weights=v4_weights, show_gui=True, **kwargs):
 
 def hand_yolo(url, weights=hand_weights, **kwargs):
     ThreadingDetector(url,
-                      is_forever=True,
                       weights_path=weights,
                       meta_file="hands.data",
                       config_path="enet-coco-obj.cfg",
@@ -40,7 +38,6 @@ def hand_yolo(url, weights=hand_weights, **kwargs):
 
 def mango_yolo(url, weights=mango_weights, **kwargs):
     ThreadingDetector(url,
-                      is_forever=True,
                       weights_path=weights,
                       meta_file="mango.data",
                       config_path=mango_config,
@@ -51,5 +48,5 @@ if __name__ == '__main__':
     # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
     # hand_weights = darknet_path % "backup/enet-coco-obj_22000.weights"
     # hand_yolo(op3_camera, hand_weights, thresh=0.2, show_gui=True, is_tracking=True)
-    coco_yolo(indoor_lab, v4_weights, thresh=0.25, show_gui=True, obj_size=[60000, 70000], nms=0.6)
+    coco_yolo(indoor_lab, v4_weights, thresh=0.25, show_gui=True, is_stream_result=True, overlap_thresh=0.45)
     # mango_yolo(gg_phone_ip, mango_weights, thresh=0.25, show_gui=True)
