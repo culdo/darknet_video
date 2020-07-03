@@ -45,10 +45,11 @@ def cv_draw_boxes(detections, img, box_color=None, use_uid=False):
 
 
 def cv_draw_fps(fps, img):
+    print(img.shape)
     ft.putText(img=img,
-               text="FPS %s" % fps,
-               org=(img.shape[1], 0),
-               fontHeight=30,
+               text="FPS %.1f" % fps,
+               org=(img.shape[1]-160, 0),
+               fontHeight=40,
                color=(0, 255, 0),
                thickness=-1,
                line_type=cv2.LINE_AA,
@@ -57,11 +58,12 @@ def cv_draw_fps(fps, img):
 
 
 def all_nms(dets, box_arr, overlapThresh):
-    box_arr = np.array(box_arr)
-    pick = py_cpu_nms(box_arr, overlapThresh)
-    for i, det in enumerate(dets):
-        if i in pick:
-            yield det
+    if len(dets) > 0:
+        box_arr = np.array(box_arr)
+        pick = py_cpu_nms(box_arr, overlapThresh)
+        for i, det in enumerate(dets):
+            if i in pick:
+                yield det
 
 
 def _choose_color(box_color, detection, use_uid):
