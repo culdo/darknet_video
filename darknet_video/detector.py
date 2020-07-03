@@ -16,26 +16,18 @@ class MetaMain:
         self.names = None
 
 
-class YOLO:
+class YOLODetector:
     def __init__(self, stream, weights_path,
                  config_path=None,
                  meta_path=None,
                  meta_file="coco.data",
-                 thresh=0.25,
-                 white_list=None,
                  show_gui=False,
                  is_tracking=False,
                  darknet_dir="../../darknet",
                  **kwargs):
         self.darknet_dir = darknet_dir
-        self.thresh = thresh
+        self.kwargs = kwargs
         self.show_gui = show_gui
-        if isinstance(white_list, str):
-            self.white_list = [white_list]
-        elif isinstance(white_list, list) or white_list is None:
-            self.white_list = white_list
-        else:
-            raise AssertionError("white_list only accept str and list.")
 
         self.stream = stream
         self.config_path = config_path
@@ -200,7 +192,7 @@ class YOLO:
                                    interpolation=cv2.INTER_LINEAR)
         darknet.copy_image_from_bytes(self.darknet_image, frame_resized.tobytes())
         detections = darknet.detect_image(self.netMain, self.metaMain, self.darknet_image, self.frame_rgb.shape,
-                                          thresh=self.thresh, white_list=self.white_list)
+                                          **self.kwargs)
         return detections
 
     def _pseudo_label(self, label, frame):

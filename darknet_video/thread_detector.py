@@ -1,5 +1,5 @@
 from threading import Thread
-from darknet_video.detector import YOLO
+from darknet_video.detector import YOLODetector
 from darknet_video.mjpeg_server import ThreadingHTTPServer
 from darknet_video.video import CvVideo
 
@@ -9,7 +9,7 @@ class ThreadingDetector:
         self.kwargs = kwargs
         self.url = url
         self.stream = CvVideo()
-        self.yolo = YOLO(self.stream, **self.kwargs)
+        self.yolo = YOLODetector(self.stream, **self.kwargs)
         self.server = ThreadingHTTPServer()
         self.run(is_forever)
 

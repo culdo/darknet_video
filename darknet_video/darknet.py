@@ -259,7 +259,7 @@ def detect(net, meta, image, thresh=.5, hier_thresh=.5, nms=.45, debug=False):
     return ret
 
 
-def detect_image(net, meta, im, custom_shape, thresh=.5, hier_thresh=.5, nms=.45, white_list=None):
+def detect_image(net, meta, im, custom_shape, thresh=.5, hier_thresh=.5, nms=.45, white_list=None, obj_size=None):
     num = c_int(0)
     pnum = pointer(num)
     predict_image(net, im)
@@ -269,18 +269,25 @@ def detect_image(net, meta, im, custom_shape, thresh=.5, hier_thresh=.5, nms=.45
     num = pnum[0]
     if nms:
         do_nms_sort(detections, num, meta.classes, nms)
-    res = _iter_detections(detections, meta.names, num, white_list)
+    res = _iter_detections(detections, meta.names, num, white_list, obj_size)
     free_detections(detections, num)
     return res
 
 
-def _iter_detections(detections, meta_names, num, white_list):
+def _iter_detections(detections, meta_names, num, white_list, obj_size):
+    if isinstance(white_list, str):
+        white_list = [white_list]
+    elif isinstance(white_list, list) or white_list is None:
+        white_list = white_list
+    else:
+        raise AssertionError("white_list only accept str and list.")
+
     objs = []
     for det, _ in zip(detections, range(num)):
         for i, (meta_name, prob) in enumerate(zip(meta_names, det.prob)):
             if white_list is None or meta_name in white_list:
                 b = det.bbox
-                if prob > 0:
+                if prob > 0 and (obj_size is None or obj_size[0] < b.w * b.h < obj_size[1]):
                     print("%-5s %.2f" % (meta_name, prob))
                     xmin, ymin, xmax, ymax = convert_back(
                         float(b.x), float(b.y), float(b.w), float(b.h))
