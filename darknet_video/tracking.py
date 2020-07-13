@@ -29,7 +29,7 @@ class SiamMask:
         self.siammask.eval().to(self.device)
         self.state = None
 
-    def init_roi(self, frame, x, y, w, h):
+    def init_target(self, frame, x, y, w, h):
         target_pos = np.array([x, y])
         target_sz = np.array([w, h])
         self.state = siamese_init(frame, target_pos, target_sz, self.siammask, self.cfg['hp'], device=self.device)
@@ -42,12 +42,14 @@ class SiamMask:
             mask = self.state['mask'] > self.state['p'].seg_thr
             img[:, :, 2] = (mask > 0) * 255 + (mask == 0) * img[:, :, 2]
             if draw_rect:
-                cv2.rectangle(img, cv2.boundingRect(np.uint8(mask)), (255, 0, 0))
+                bbox = cv2.boundingRect(np.uint8(mask))
+                cv2.rectangle(img, bbox, (0, 255, 0))
+                return bbox
 
     def _cb_mouse(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
             x, y, w, h = cv2.selectROI('SiamMask', self.frame, False, False)
-            self.init_roi(self.frame, x, y, w, h)
+            self.init_target(self.frame, x, y, w, h)
 
     def run_along(self, url):
         cap = cv2.VideoCapture(url)

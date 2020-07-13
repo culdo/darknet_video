@@ -294,7 +294,9 @@ def _iter_detections(detections, meta_names, num, white_list, obj_size):
                     xmin, ymin, xmax, ymax = convert_back(
                         float(b.x), float(b.y), float(b.w), float(b.h))
                     objs.append({"class_id": i, "name": meta_name, "confidence": prob,
-                                 "coord": {"x": b.x, "y": b.y, "w": b.w, "h": b.h}, "box_xy": [xmin, ymin, xmax, ymax]})
+                                 "coord": {"x": b.x, "y": b.y, "w": b.w, "h": b.h},
+                                 "box_xy": [xmin, ymin, xmax, ymax]},
+                                )
                     nms_box.append([xmin, ymin, xmax, ymax, prob])
     return objs, nms_box
 

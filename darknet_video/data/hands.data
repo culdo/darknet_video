@@ -1,4 +1,4 @@
-classes= 13
+classes= 3
 train  = data/train_obj.txt
 valid  = data/train_obj.txt
 names = data/hands.names

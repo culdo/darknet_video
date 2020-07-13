@@ -7,10 +7,10 @@ from PIL import ImageColor
 
 from darknet_video.utils.nms import py_cpu_nms
 
-box_colormap = ["NAVY", "BLUE", "AQUA", "TEAL", "OLIVE", "GREEN", "LIME", "ORANGE", "RED", "MAROON",
-                "FUCHSIA", "PURPLE", "GRAY", "SILVER"]
+box_colormap = ["NAVY", "AQUA", "TEAL", "OLIVE", "GREEN", "LIME", "ORANGE", "RED", "MAROON",
+                "FUCHSIA", "PURPLE", "GRAY", "BLUE", "SILVER"]
 color_len = len(box_colormap)
-ft = cv2.freetype.createFreeType2()  # 需要安装freetype模块 cv2' has no attribute 'freetype'
+ft = cv2.freetype.createFreeType2()
 if os.name == 'nt':
     ft.loadFontData(fontFileName="C:\\Windows\\Fonts\\kaiu.ttf", id=0)
 else:
@@ -25,7 +25,15 @@ def convert_back(x, y, w, h):
     return xmin, ymin, xmax, ymax
 
 
-def cv_draw_boxes(detections, img, box_color=None, use_uid=False):
+def convert_to(xmin, ymin, xmax, ymax):
+    x = int(round((xmin + xmax)/2))
+    y = int(round((ymin + ymax)/2))
+    w = int(round(xmax - xmin))
+    h = int(round(ymax - ymin))
+    return x, y, w, h
+
+
+def cv_draw_boxes_fps(detections, img, fps, box_color=None, use_uid=False):
     for detection in detections:
         b = detection["coord"]
         xmin, ymin, xmax, ymax = detection["box_xy"]
@@ -41,16 +49,11 @@ def cv_draw_boxes(detections, img, box_color=None, use_uid=False):
                    thickness=-1,
                    line_type=cv2.LINE_AA,
                    bottomLeftOrigin=True)
-    return img
-
-
-def cv_draw_fps(fps, img):
-    print(img.shape)
     ft.putText(img=img,
                text="FPS %.1f" % fps,
-               org=(img.shape[1]-160, 0),
+               org=(img.shape[1] - 160, 0),
                fontHeight=40,
-               color=(0, 255, 0),
+               color=(0, 0, 255),
                thickness=-1,
                line_type=cv2.LINE_AA,
                bottomLeftOrigin=False)
