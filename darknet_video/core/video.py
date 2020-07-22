@@ -10,7 +10,7 @@ import cv2
 
 class CvVideo:
     def __init__(self, url="0", video_size=(1920, 1080), is_rotate=False, labeling_fps=None, is_lock=False,
-                 val_split=0.2, limit_frames=None, start_frame=0, **kwargs):
+                 val_split=0.2, limit_frames=None, start_frame=0, is_labeling=False, **kwargs):
         self.val_split = val_split
         self.is_lock = is_lock
         self.is_rotate = is_rotate
@@ -29,12 +29,14 @@ class CvVideo:
         self.track_box = None
         self.is_previous = False
         self.manual_roi = None
+        self.is_labeling = is_labeling
 
         if isinstance(url, int):
             url = str(url)
         self.url = url
         # Use filename to assure training and validation set.
-        random.seed(os.path.basename(url))
+        if is_labeling:
+            random.seed(os.path.basename(url))
         self._init_stream(video_size)
 
     def _init_stream(self, video_size=(1920, 1080)):
@@ -59,7 +61,8 @@ class CvVideo:
                 #     raise AssertionError("frame_count < limit_frames")
                 frame_count = self.limit_frames
                 print("Limited frames: %d" % frame_count)
-            self.val_set = random.choices(range(frame_count - 1), k=round(frame_count * self.val_split))
+            if self.is_labeling:
+                self.val_set = random.choices(range(frame_count - 1), k=round(frame_count * self.val_split))
 
     def capture_stream(self):
 
