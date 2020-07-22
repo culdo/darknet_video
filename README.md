@@ -22,6 +22,6 @@ ThreadingDetector(0, weights_path='yolov3.weights')
 Automating labeling use native detection ability of YOLO and SiamMask. 
 ### To-do list
 - [ ] click to select yolo box to candidate label
-- [ ] frame by frame human check 
-- [ ] manual bbox selecting
+- [x] frame by frame human check 
+- [x] manual bbox selecting
 - [ ] adjust yolo predict box
