@@ -30,10 +30,11 @@ class CvVideo:
         self.is_previous = False
         self.manual_roi = None
 
+        if isinstance(url, int):
+            url = str(url)
         self.url = url
         # Use filename to assure training and validation set.
-        if isinstance(url, str):
-            random.seed(os.path.basename(url))
+        random.seed(os.path.basename(url))
         self._init_stream(video_size)
 
     def _init_stream(self, video_size=(1920, 1080)):
