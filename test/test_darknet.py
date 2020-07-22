@@ -1,4 +1,4 @@
-from darknet_video.thread_detector import ThreadingDetector
+from darknet_video.core.thread_detector import ThreadingDetector
 
 
 def coco_yolo(url, weights, show_gui=True, **kwargs):
@@ -40,16 +40,21 @@ if __name__ == '__main__':
     enet_weights = "bin/enet-coco.weights"
     hand_weights = "backup/yolov4-hands_best.weights"
     # hand_video = "/home/lab-pc1/nptu/lab/ip_cam/videos/hands/0.mp4"
+    hand_num = 2
+    hand_video = "/home/lab-pc1/nptu/lab/videos/hands/hover/hand_%d.mp4" % hand_num
     mango_img = "mango_dev/*.jpg"
     mango_weights = "backup/yolov4-mango_best.weights"
     mango_config = "enet-mango.cfg"
     mango_data = "mango.data"
     # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-    # hand_weights = darknet_path % "backup/enet-coco-obj_22000.weights"
-    hand_yolo(op3_camera, hand_weights, thresh=0.25, show_gui=True)
-    # hand_video = "/home/lab-pc1/nptu/lab/videos/hands/hover/hand_3.mp4"
-    # coco_yolo(hand_video, enet_weights, thresh=0.25, show_gui=True, obj_size=[100000, 1000000],
-    #           overlap_thresh=0.45, is_labeling=True, data_name="hand_test",
-    #           white_list="人", labels_map={0: 2})
+    # hand_yolo(phone_ip, hand_weights, thresh=0.25, show_gui=True)
+    # hand_yolo(hand_video, hand_weights, thresh=0.25, show_gui=True, is_rotate=True, obj_size=[100000, 1000000],
+    #           overlap_thresh=0.15, autoplay=0, is_tracking=False,
+    #           is_labeling=False, data_name="hand_test", labels_map={0: hand_num - 1, 1: hand_num - 1, 2: hand_num - 1},
+    #           limit_frames=954)
+    coco_yolo(hand_video, v4_weights, thresh=0.10, show_gui=True, obj_size=[150000, 1000000],
+              overlap_thresh=0.01, is_rotate=True, autoplay=1, is_tracking=False,
+              is_labeling=True, data_name="hand_test", white_list="人", labels_map={0: hand_num-1},
+              limit_frames=954)
     # mango_yolo(wan_phone_ip, mango_weights, thresh=0.25, show_gui=False, is_stream_result=True, obj_size=[60000, 70000],
     #           overlap_thresh=0.45)

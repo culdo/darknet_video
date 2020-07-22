@@ -33,7 +33,7 @@ def convert_to(xmin, ymin, xmax, ymax):
     return x, y, w, h
 
 
-def cv_draw_boxes_fps(detections, img, fps, box_color=None, use_uid=False):
+def cv_draw_boxes(detections, img, box_color=None, use_uid=False):
     for detection in detections:
         b = detection["coord"]
         xmin, ymin, xmax, ymax = detection["box_xy"]
@@ -49,9 +49,13 @@ def cv_draw_boxes_fps(detections, img, fps, box_color=None, use_uid=False):
                    thickness=-1,
                    line_type=cv2.LINE_AA,
                    bottomLeftOrigin=True)
+    return img
+
+
+def cv_draw_text(text, img, offset=160):
     ft.putText(img=img,
-               text="FPS %.1f" % fps,
-               org=(img.shape[1] - 160, 0),
+               text=text,
+               org=(img.shape[1] - offset, 0),
                fontHeight=40,
                color=(0, 0, 255),
                thickness=-1,

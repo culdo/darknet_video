@@ -127,7 +127,7 @@ if os.name == "nt":
             print(
                 "Environment variables indicated a CPU run, but we didn't find `" + winNoGPUdll + "`. Trying a GPU run anyway.")
 else:
-    lib = CDLL(os.path.dirname(__file__) + "/libdarknet.so", RTLD_GLOBAL)
+    lib = CDLL(os.path.dirname(__file__) + "/../libdarknet.so", RTLD_GLOBAL)
 lib.network_width.argtypes = [c_void_p]
 lib.network_width.restype = c_int
 lib.network_height.argtypes = [c_void_p]
@@ -294,7 +294,7 @@ def _iter_detections(detections, meta_names, num, white_list, obj_size):
                     xmin, ymin, xmax, ymax = convert_back(
                         float(b.x), float(b.y), float(b.w), float(b.h))
                     objs.append({"class_id": i, "name": meta_name, "confidence": prob,
-                                 "coord": {"x": b.x, "y": b.y, "w": b.w, "h": b.h},
+                                 "coord": {"x": round(b.x), "y": round(b.y), "w": round(b.w), "h": round(b.h)},
                                  "box_xy": [xmin, ymin, xmax, ymax]},
                                 )
                     nms_box.append([xmin, ymin, xmax, ymax, prob])

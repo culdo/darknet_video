@@ -24,9 +24,9 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         # Send image files in a loop
         lastFrameTime = 0
-        while self.server.stream.yolo_raw is not None:
+        while self.server.stream.yolo_jpg is not None:
 
-            contents = self.server.stream.yolo_raw
+            contents = self.server.stream.yolo_jpg
 
             # Wait if required so we stay under the max FPS
             if lastFrameTime != 0:

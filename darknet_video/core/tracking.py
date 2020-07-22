@@ -34,16 +34,30 @@ class SiamMask:
         target_sz = np.array([w, h])
         self.state = siamese_init(frame, target_pos, target_sz, self.siammask, self.cfg['hp'], device=self.device)
 
-    def track(self, img, draw_rect=False):
+    def track(self, img, draw_rect=True, draw_mask=True):
         if self.state is not None:
             self.state = siamese_track(self.state, img, mask_enable=True, refine_enable=True,
                                        device=self.device)  # track
             location = self.state['ploygon'].flatten()
             mask = self.state['mask'] > self.state['p'].seg_thr
-            img[:, :, 2] = (mask > 0) * 255 + (mask == 0) * img[:, :, 2]
+            if draw_mask:
+                img[:, :, 2] = (mask > 0) * 255 + (mask == 0) * img[:, :, 2]
             if draw_rect:
                 bbox = cv2.boundingRect(np.uint8(mask))
-                cv2.rectangle(img, bbox, (0, 255, 0))
+                # right upper coner x, y
+                x, y, w, h = bbox
+                span = 10
+                x, y, w, h = x-span, y-span, w+span*2, h+span*2
+                if x < 0:
+                    x = 0
+                if y < 0:
+                    y = 0
+                if w > img.shape[0]:
+                    w = img.shape[0]
+                if h > img.shape[1]:
+                    h = img.shape[1]
+                bbox = x, y, w, h
+                cv2.rectangle(img, bbox, (0, 255, 0), 2)
                 return bbox
 
     def _cb_mouse(self, event, x, y, flags, param):
