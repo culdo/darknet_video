@@ -459,5 +459,11 @@ def performDetect(imagePath="data/dog.jpg", thresh=0.25, configPath="./cfg/yolov
     return detections
 
 
+class MetaMain:
+    def __init__(self):
+        self.classes = None
+        self.names = None
+
+
 if __name__ == "__main__":
     print(performDetect())

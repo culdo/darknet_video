@@ -95,7 +95,6 @@ class CvVideo:
             raw = cv2.rotate(raw, cv2.ROTATE_90_CLOCKWISE)
         self.raw = raw
         self.frame_i = int(self.cap.get(cv2.CAP_PROP_POS_FRAMES) - 1)
-        print("frame_i: %s" % self.frame_i)
         self._next_frame()
 
     def _next_frame(self):
