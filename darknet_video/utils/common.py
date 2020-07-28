@@ -26,8 +26,8 @@ def convert_back(x, y, w, h):
 
 
 def convert_to(xmin, ymin, xmax, ymax):
-    x = int(round((xmin + xmax)/2))
-    y = int(round((ymin + ymax)/2))
+    x = int(round((xmin + xmax) / 2))
+    y = int(round((ymin + ymax) / 2))
     w = int(round(xmax - xmin))
     h = int(round(ymax - ymin))
     return x, y, w, h
@@ -65,12 +65,19 @@ def cv_draw_text(text, img, offset=160):
 
 
 def all_nms(dets, box_arr, overlapThresh):
-    if len(dets) > 0:
-        box_arr = np.array(box_arr)
-        pick = py_cpu_nms(box_arr, overlapThresh)
-        for i, det in enumerate(dets):
-            if i in pick:
-                yield det
+    box_arr = np.array(box_arr)
+    pick = py_cpu_nms(box_arr, overlapThresh)
+    for i, det in enumerate(dets):
+        if i in pick:
+            yield det
+
+
+def sort_confid(dets, box_arr):
+    box_arr = np.array(box_arr)
+    scores = box_arr[:, 4]  # bbox打分
+    highest = scores.argsort()[-1]
+
+    return [dets[highest]]
 
 
 def _choose_color(box_color, detection, use_uid):

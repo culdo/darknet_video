@@ -3,21 +3,23 @@ import os
 import cv2
 
 
-def pseudo_label(stream, data_name, label_id, labels_map=(), val_split=0.2):
+def pseudo_label(stream, data_name, label_id, is_empty=False, labels_map=(), label_subset=1):
     if stream.frame_i in stream.val_set:
         data_subset = "val"
     else:
         data_subset = "train"
     data_dir = os.path.join(os.path.dirname(__file__), "../../../darknet", "data", data_name)
-    data_list = os.path.join(data_dir, data_subset) + ".txt"
-    label_path = os.path.join(data_dir, data_subset, "%s_%s" % (label_id, int(stream.frame_i)))
+    label_path = os.path.join(data_subset, "%s-%s_%s" % (label_id, label_subset, int(stream.frame_i)))
     # TODO(190717): Prevent to duplicated write.
-    cv2.imwrite(label_path + ".jpg", stream.raw)
+    write_path = os.path.join(data_dir, label_path)
+    cv2.imwrite(write_path + ".jpg", stream.raw)
     im_h, im_w = stream.raw.shape[:2]
 
     # TODO(190716): Make priority of  manual selecting ROI ,tracking ROI and YOLO box have better user experience
-    with open(label_path + ".txt", 'w') as f:
-        if stream.manual_roi:
+    with open(write_path + ".txt", 'w') as f:
+        if is_empty:
+            f.write("")
+        elif stream.manual_roi:
             label_rect(f, im_h, im_w, label_id, stream.manual_roi)
             stream.manual_roi = None
         elif stream.track_box:
@@ -34,10 +36,24 @@ def pseudo_label(stream, data_name, label_id, labels_map=(), val_split=0.2):
         else:
             f.write("")
 
-    darknet_label_path = os.path.join("data", data_name, data_subset, "%s_%s" % (label_id, int(stream.frame_i)))
-    with open(data_list, 'a') as f:
-        f.write(darknet_label_path + ".jpg\n")
-    print("Wrote label.")
+
+def prewrite_label(stream, data_name, label_id, label_subset, is_write_path):
+    data_dir = os.path.join(os.path.dirname(__file__), "../../../darknet", "data", data_name)
+    if is_write_path:
+        def _write_path(data_subset):
+            data_list = os.path.join(data_dir, data_subset) + ".txt"
+            with open(data_list, "a+") as f:
+                for i in range(stream.frame_count):
+                    if i % stream.jump_frames == 0 and (i in stream.val_set and data_subset == "val") or (
+                            i not in stream.val_set and data_subset == "train"):
+                        # Write label path
+                        darknet_label_path = os.path.join("data", data_name, data_subset,
+                                                          "%s-%s_%s" % (label_id, label_subset, i) + ".jpg")
+                        f.write(darknet_label_path + "\n")
+
+        _write_path("train")
+        _write_path("val")
+        print("Pre-wrote label.")
 
 
 def label_rect(f, im_h, im_w, label_id, roi):

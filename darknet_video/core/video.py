@@ -9,12 +9,12 @@ import cv2
 
 
 class CvVideo:
-    def __init__(self, url="0", video_size=(1920, 1080), is_rotate=False, labeling_fps=None, is_lock=False,
+    def __init__(self, url="0", video_size=(1920, 1080), is_rotate=False, labeling_fps=30, is_lock=False,
                  val_split=0.2, limit_frames=None, start_frame=0, is_labeling=False, **kwargs):
         self.val_split = val_split
         self.is_lock = is_lock
         self.is_rotate = is_rotate
-        self.lock = threading.Lock()
+        # self.lock = threading.Lock()
         self.raw = None
         self.yolo_raw = None
         self.labeling_fps = labeling_fps
@@ -25,7 +25,7 @@ class CvVideo:
         self.start_frame = start_frame
 
         # TODO(190716): Move below props to suitable detector class.
-        self.detections = [], []
+        self.detections = []
         self.track_box = None
         self.is_previous = False
         self.manual_roi = None
@@ -54,6 +54,7 @@ class CvVideo:
             else:
                 self.cap = cv2.VideoCapture(self.url)
                 self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.start_frame)
+                self.fps = self.cap.get(cv2.CAP_PROP_FPS)
             frame_count = round(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
             print("Total frames: %d" % frame_count)
             if self.limit_frames:
@@ -63,12 +64,16 @@ class CvVideo:
                 print("Limited frames: %d" % frame_count)
             if self.is_labeling:
                 self.val_set = random.choices(range(frame_count - 1), k=round(frame_count * self.val_split))
+            self.frame_count = frame_count
+
+            self.jump_frames = round(self.fps / self.labeling_fps)
 
     def capture_stream(self):
 
         print("Start capture.")
         try:
-            while (self.cap.isOpened() and not self.is_stop) and (not self.limit_frames or self.frame_i < self.limit_frames - 1):
+            while (self.cap.isOpened() and not self.is_stop) and (
+                    not self.limit_frames or self.frame_i < self.limit_frames - 1):
                 if self.is_lock:
                     self.queue.put("check1")
                     self.queue.put("check2")
@@ -91,15 +96,13 @@ class CvVideo:
         self.raw = raw
         self.frame_i = int(self.cap.get(cv2.CAP_PROP_POS_FRAMES) - 1)
         print("frame_i: %s" % self.frame_i)
-        if self.labeling_fps:
-            self._jump_frame()
+        self._next_frame()
 
-    def _jump_frame(self):
-        fps = self.cap.get(cv2.CAP_PROP_FPS)
-        self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.frame_i + (fps / self.labeling_fps))
+    def _next_frame(self):
+        self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.frame_i + self.jump_frames)
 
     def _back_frame(self):
-        self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.frame_i - 1)
+        self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.frame_i - self.jump_frames)
         self.is_previous = False
 
     def _read_files(self, img_files):

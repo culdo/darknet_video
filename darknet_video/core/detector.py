@@ -7,8 +7,8 @@ import cv2
 import numpy as np
 
 from darknet_video.core import darknet
-from darknet_video.utils.common import cv_draw_boxes, all_nms, cv_draw_text
-from darknet_video.utils.labeling import pseudo_label
+from darknet_video.utils.common import cv_draw_boxes, all_nms, cv_draw_text, sort_confid
+from darknet_video.utils.labeling import pseudo_label, prewrite_label
 
 
 class MetaMain:
@@ -27,10 +27,17 @@ class YOLODetector:
                  darknet_dir="../../darknet",
                  is_stream_result=False,
                  is_labeling=False,
+                 only_tracking=False,
                  autoplay=1,
-                 data_name=None, **kwargs):
+                 is_write_path=True,
+                 data_name=None, label_empty=False, label_subset=1, only_one=False, labels_map=(), **kwargs):
+        self.labels_map = labels_map
+        self.only_one = only_one
+        self.label_subset = label_subset
+        self.label_empty = label_empty
+        self.is_write_path = is_write_path
         self.data_name = data_name
-        self.only_tracking = False
+        self.only_tracking = only_tracking
         self.autoplay = autoplay
         self.is_stream_result = is_stream_result
         self.darknet_dir = darknet_dir
@@ -47,29 +54,36 @@ class YOLODetector:
         self.meta_path = meta_path
         self.meta_file = meta_file
         self.is_tracking = is_tracking
-        if is_tracking:
-            from .tracking import SiamMask
-            self.sm = SiamMask()
-            self._is_pressed_shift = False
-
-        self._check_path()
         self.is_labeling = is_labeling
+        if is_labeling:
+            prewrite_label(self.stream, data_name, list(labels_map.values())[0], label_subset, is_write_path)
 
-        # Load neural network
-        self.netMain = darknet.load_net_custom(self.config_path.encode(
-            "ascii"), self.weights_path.encode("ascii"), 0, 1)  # batch size = 1
-        self.input_size = (darknet.network_width(self.netMain), darknet.network_height(self.netMain))
+        if not label_empty:
+            if is_tracking:
+                from .tracking import SiamMask
+                self.sm = SiamMask()
+                self._is_pressed_shift = False
 
-        self._load_meta()
-        # Create an image we reuse for each detect
-        self.darknet_image = darknet.make_image(darknet.network_width(self.netMain),
-                                                darknet.network_height(self.netMain), 3)
+            if not only_tracking:
+                self._init_yolo()
+
         self._reset_pick_classes()
 
         if os.name != 'nt':
             subprocess.call("notify-send -i %s -t %d %s %s"
                             % ("/home/lab-pc1/nptu/lab/computer_vision/darknets/service/darknet_notext.png",
                                3000, "Darknet服務", "已載入類神經網路模型"), shell=True)
+
+    def _init_yolo(self):
+        self._check_path()
+        # Load neural network
+        self.netMain = darknet.load_net_custom(self.config_path.encode(
+            "ascii"), self.weights_path.encode("ascii"), 0, 1)  # batch size = 1
+        self.input_size = (darknet.network_width(self.netMain), darknet.network_height(self.netMain))
+        self._load_meta()
+        # Create an image we reuse for each detect
+        self.darknet_image = darknet.make_image(darknet.network_width(self.netMain),
+                                                darknet.network_height(self.netMain), 3)
 
     def _load_meta(self):
         self.metaMain = MetaMain()
@@ -137,7 +151,7 @@ class YOLODetector:
         self.picked_det = None
 
     def detect_stream(self, save_video=False, video_size=(1280, 720), overlap_thresh=0.45,
-                      fps=30.0, fpath="output", labels_map=(), **kwargs):
+                      fps=30.0, fpath="output", **kwargs):
 
         if self.show_gui:
             cv2.namedWindow('Detected', cv2.WINDOW_NORMAL)
@@ -155,8 +169,9 @@ class YOLODetector:
                 self._get_frame()
                 # Copy for edit
                 img = np.copy(self.frame)
-                self._yolo_detect(img, overlap_thresh)
-                self._tracking(img)
+                if not self.label_empty:
+                    self._yolo_detect(img, overlap_thresh)
+                    self._tracking(img)
                 fps = 1 / (time.time() - prev_time)
                 print("\nFPS:   %.2f" % fps)
                 if self.is_labeling:
@@ -171,7 +186,8 @@ class YOLODetector:
                 if self.show_gui and self._check_gui() == "q":
                     break
                 if self.is_labeling:
-                    pseudo_label(self.stream, self.data_name, list(labels_map.values())[0], labels_map=labels_map)
+                    pseudo_label(self.stream, self.data_name, list(self.labels_map.values())[0], self.is_write_path,
+                                 is_empty=self.label_empty, labels_map=self.labels_map, label_subset=self.label_subset)
         finally:
             if save_video:
                 self.out.release()
@@ -184,11 +200,14 @@ class YOLODetector:
     def _yolo_detect(self, img, overlap_thresh):
         if not self.only_tracking:
             dets, nms_box = self.detect_image()
-            if overlap_thresh:
-                dets = all_nms(dets, nms_box, overlap_thresh)
-            dets = self._check_whitelist(dets)
+            if len(dets) > 0:
+                if self.only_one:
+                    dets = sort_confid(dets, nms_box)
+                elif overlap_thresh:
+                    dets = all_nms(dets, nms_box, overlap_thresh)
+                dets = self._check_whitelist(dets)
+                cv_draw_boxes(dets, img)
             self.stream.detections = dets
-            cv_draw_boxes(dets, img)
             if self.is_labeling:
                 self._check_dets(img)
 
@@ -226,7 +245,7 @@ class YOLODetector:
                 self.stream.detections = []
                 self.manual_roi()
         elif key == ord(' '):
-            if len(self.stream.detections) == 0 and not self.only_tracking:
+            if len(self.stream.detections) == 0 and not self.only_tracking and self.is_labeling:
                 self.stream.manual_roi = self.prev_coord
             if self.autoplay == 1:
                 self.autoplay = 0
@@ -248,9 +267,10 @@ class YOLODetector:
     def _tracking_roi(self):
         self.picked_det = True
         self.stream.track_box = cv2.selectROI('Detected', self.frame, False, False)
-        x, y, w, h = self.stream.track_box
-        self.sm.init_target(self.frame, x + w / 2, y + h / 2, w, h)
-        cv2.setMouseCallback('Detected', self._pick_class)
+        if self.stream.track_box != (0, 0, 0, 0):
+            x, y, w, h = self.stream.track_box
+            self.sm.init_target(self.frame, x + w / 2, y + h / 2, w, h)
+            cv2.setMouseCallback('Detected', self._pick_class)
 
     def manual_roi(self):
         manual_roi = cv2.selectROI('Detected', self.frame, False, False)
@@ -281,8 +301,8 @@ class YOLODetector:
         if len(self.stream.detections) > 0:
             coord = self.stream.detections[0]["coord"]
             x, y, w, h = coord["x"], coord["y"], coord["w"], coord["h"]
-            x = round(x - w/2)
-            y = round(y - h/2)
+            x = round(x - w / 2)
+            y = round(y - h / 2)
             self.prev_coord = x, y, w, h
         else:
             cv2.rectangle(img, self.prev_coord, color, 2)
