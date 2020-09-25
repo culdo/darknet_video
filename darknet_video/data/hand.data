@@ -1,0 +1,6 @@
+classes= 1
+train  = data/train_obj.txt
+valid  = data/train_obj.txt
+names = data/hand.names
+backup = backup/
+
