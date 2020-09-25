@@ -1,5 +1,6 @@
 # Darknet Video
 <img src="docs/demo.gif" width="80%"/>
+
 * Extract python APIs from [darknet](https://github.com/AlexeyAB/darknet) to maintain python wrapper easier.
 # Feature
 * Video object tracking using [SiamMask](https://github.com/foolwood/SiamMask)
