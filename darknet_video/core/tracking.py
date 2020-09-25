@@ -40,14 +40,14 @@ class SiamMask:
                                        device=self.device)  # track
             location = self.state['ploygon'].flatten()
             mask = self.state['mask'] > self.state['p'].seg_thr
+            bbox = cv2.boundingRect(np.uint8(mask))
             if draw_mask:
                 img[:, :, 2] = (mask > 0) * 255 + (mask == 0) * img[:, :, 2]
             if draw_rect:
-                bbox = cv2.boundingRect(np.uint8(mask))
                 # right upper coner x, y
                 x, y, w, h = bbox
                 span = 10
-                x, y, w, h = x-span, y-span, w+span*2, h+span*2
+                x, y, w, h = x - span, y - span, w + span * 2, h + span * 2
                 if x < 0:
                     x = 0
                 if y < 0:
@@ -58,7 +58,7 @@ class SiamMask:
                     h = img.shape[1]
                 bbox = x, y, w, h
                 cv2.rectangle(img, bbox, (0, 255, 0), 2)
-                return bbox
+            return bbox
 
     def _cb_mouse(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:

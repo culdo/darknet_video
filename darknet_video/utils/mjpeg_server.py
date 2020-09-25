@@ -24,7 +24,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         # Send image files in a loop
         lastFrameTime = 0
-        while self.server.stream.yolo_jpg is not None:
+        while self.server.stream.yolo_jpg is not None and not self.server.stream.is_stop:
 
             contents = self.server.stream.yolo_jpg
 

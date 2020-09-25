@@ -1,10 +1,11 @@
 from darknet_video.core.thread_detector import ThreadingDetector
+from darknet_video.utils.get_yt import get_yt_vid
 
 
-def coco_yolo(url, weights, show_gui=True, **kwargs):
+def coco_yolo(url, weights, meta_file="coco_cht.data",show_gui=True, **kwargs):
     ThreadingDetector(url,
                       weights_path=weights,
-                      meta_file="coco_cht.data",
+                      meta_file=meta_file,
                       show_gui=show_gui,
                       **kwargs)
 
@@ -57,9 +58,12 @@ if __name__ == '__main__':
     hands_video = "/home/lab-pc1/nptu/lab/videos/hands/hover/hand_%s-%s.mp4" % (hand_num, label_subset)
     hands_weights = "backup/yolov4-hands_best.weights"
     hand_weights = "bin/cross-hands.weights"
+
+    yt_video = get_yt_vid("https://www.youtube.com/watch?v=9XPBNaLXzPo")
     # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
     if not labeling:
-        hands_yolo(op3_camera, hands_weights, thresh=0.25, show_gui=False, only_one=True)
+        # hands_yolo(op3_camera, hands_weights, thresh=0.25, show_gui=False, only_one=True)
+        coco_yolo(yt_video, enet_weights, is_realtime=False, is_tracking=True, meta_file="coco_cht.data", thresh=0.25,  show_gui=True)
         # hands_yolo(op3_camera, hands_weights, thresh=0.25, show_gui=True)
         # hands_yolo(hands_video, hands_weights, thresh=0.25, show_gui=True, is_rotate=False, obj_size=[100000, 1000000],
         #           overlap_thresh=0.15, autoplay=0, is_tracking=False, labeling_fps=5,

@@ -8,7 +8,7 @@ from PIL import ImageColor
 from darknet_video.utils.nms import py_cpu_nms
 
 box_colormap = ["NAVY", "AQUA", "TEAL", "OLIVE", "GREEN", "LIME", "ORANGE", "RED", "MAROON",
-                "FUCHSIA", "PURPLE", "GRAY", "BLUE", "SILVER"]
+                "FUCHSIA", "PURPLE", "GRAY", "SILVER"]
 color_len = len(box_colormap)
 ft = cv2.freetype.createFreeType2()
 if os.name == 'nt':
@@ -30,6 +30,12 @@ def convert_to(xmin, ymin, xmax, ymax):
     y = int(round((ymin + ymax) / 2))
     w = int(round(xmax - xmin))
     h = int(round(ymax - ymin))
+    return x, y, w, h
+
+
+def to_center(x, y, w, h):
+    x = x + w / 2
+    y = y + h / 2
     return x, y, w, h
 
 
