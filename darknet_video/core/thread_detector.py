@@ -1,3 +1,4 @@
+import time
 from threading import Thread
 
 from darknet_video.core.detector import YOLODetector
@@ -11,6 +12,7 @@ class ThreadingDetector:
         self.is_stream_result = is_stream_result
         self.stream = CvVideo(url, **kwargs)
         self.yolo = YOLODetector(self.stream, is_stream_result=is_stream_result, **kwargs)
+        self.server = None
         self._run()
 
     def _run(self):
@@ -19,13 +21,12 @@ class ThreadingDetector:
         detect_th = self._detect_frame()
         detect_th.start()
         if self.is_stream_result:
-            server_th = self._result_stream()
+            server_th = self._stream_result()
             server_th.start()
-            if self.blocking:
-                server_th.join()
         if self.blocking:
             detect_th.join()
             cap_th.join()
+        self._after_clear()
 
     def _detect_frame(self):
         def thread():
@@ -39,7 +40,7 @@ class ThreadingDetector:
 
         return Thread(target=thread)
 
-    def _result_stream(self):
+    def _stream_result(self):
         self.server = ThreadingHTTPServer()
 
         def thread():
@@ -47,3 +48,11 @@ class ThreadingDetector:
             self.server.serve_forever()
 
         return Thread(target=thread)
+
+    def _after_clear(self):
+        def thread():
+            while not self.stream.is_stop:
+                time.sleep(0.01)
+            if self.server:
+                self.server.shutdown()
+        Thread(target=thread).start()
