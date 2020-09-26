@@ -4,6 +4,7 @@
 <img src="docs/demo.gif" width="80%"/>
 
 ## Robot Interaction
+Use with [python-OP3](https://github.com/culdo/python-OP3)
 ### Gesture Recognition
 <img src="docs/robot_gesture.gif" width="80%"/>
 
