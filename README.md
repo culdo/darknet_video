@@ -1,15 +1,15 @@
 # Darknet Video
 * Extract python APIs from [darknet](https://github.com/AlexeyAB/darknet) to maintain python wrapper easier.
 ## Object Detection and Tracking
-<img src="docs/demo.gif" width="80%"/>
+<img src="https://user-images.githubusercontent.com/26900749/160601089-077b0129-9f8e-435c-9f22-1e616b111d38.gif" width="80%"/>
 
 ## Robot Interaction
 Use with [python-OP3](https://github.com/culdo/python-OP3)
 ### Gesture Recognition
-<img src="docs/robot_gesture.gif" width="80%"/>
+<img src="https://user-images.githubusercontent.com/26900749/160601150-7f3b9284-e254-4b28-9b67-52172bdb41d4.gif" width="80%"/>
 
 ### Head Tracking
-<img src="docs/robot_tracking.gif" width="80%"/>
+<img src="https://user-images.githubusercontent.com/26900749/160601155-d7568791-a870-47e2-b6cd-4fa5d839bafc.gif" width="80%"/>
 
 # Feature
 * Video object tracking using [SiamMask](https://github.com/foolwood/SiamMask)

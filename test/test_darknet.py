@@ -62,25 +62,7 @@ if __name__ == '__main__':
     yt_video = get_yt_vid("https://www.youtube.com/watch?v=9XPBNaLXzPo")
     # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
     if not labeling:
-        # hands_yolo(op3_camera, hands_weights, thresh=0.25, show_gui=False, only_one=True)
-        coco_yolo(yt_video, enet_weights, is_realtime=False, is_tracking=True, meta_file="coco_cht.data", thresh=0.25,  show_gui=True)
-        # hands_yolo(op3_camera, hands_weights, thresh=0.25, show_gui=True)
-        # hands_yolo(hands_video, hands_weights, thresh=0.25, show_gui=True, is_rotate=False, obj_size=[100000, 1000000],
-        #           overlap_thresh=0.15, autoplay=0, is_tracking=False, labeling_fps=5,
-        #           is_labeling=False, data_name="hand_test",
-        #           limit_frames=1448)
+        coco_yolo(yt_video, enet_weights, is_realtime=False, is_tracking=False,
+                  meta_file="coco_cht.data", thresh=0.25, show_gui=True)
     else:
-        # coco_yolo(hands_video, v4_weights, thresh=0.10, show_gui=True,
-        #           overlap_thresh=0.01, is_rotate=False, autoplay=0, is_tracking=False, only_tracking=False,
-        #           labeling_fps=30, obj_size=[150000, 1000000],
-        #           is_labeling=True, data_name="hand_test", white_list="人", labels_map={0: hand_num-1},
-        #           label_empty=False, label_subset=label_subset,
-        #           limit_frames=558, is_write_path=True)
-        hand_yolo(hands_video, hand_weights, thresh=0.10, show_gui=True,
-                  overlap_thresh=0.01, is_rotate=False, autoplay=0, is_tracking=False, only_tracking=False,
-                  labeling_fps=30, only_one=True,
-                  is_labeling=True, data_name="hand_test", white_list="hand", labels_map={0: hand_num - 1},
-                  label_empty=False, label_subset=label_subset,
-                  limit_frames=558, is_write_path=True)
-    # mango_yolo(wan_phone_ip, mango_weights, thresh=0.25, show_gui=False, is_stream_result=True, obj_size=[60000, 70000],
-    #           overlap_thresh=0.45)
+        pass

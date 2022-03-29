@@ -90,6 +90,9 @@ class METADATA(Structure):
 hasGPU = True
 if os.name == "nt":
     cwd = os.path.dirname(__file__)
+    cwd = os.path.join(cwd, "..", "..", "..", "darknet", "build", "darknet", "x64")
+    os.add_dll_directory('c:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.2/bin')
+    os.add_dll_directory(cwd)
     os.environ['PATH'] = cwd + ';' + os.environ['PATH']
     winGPUdll = os.path.join(cwd, "yolo_cpp_dll.dll")
     winNoGPUdll = os.path.join(cwd, "yolo_cpp_dll_nogpu.dll")

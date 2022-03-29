@@ -7,7 +7,6 @@ from queue import Queue
 import cv2
 import numpy as np
 
-import torch
 from darknet_video.core import darknet
 from darknet_video.core.darknet import MetaMain
 from darknet_video.utils.common import cv_draw_boxes, all_nms, cv_draw_text, sort_confid
