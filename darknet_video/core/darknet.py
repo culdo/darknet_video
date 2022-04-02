@@ -84,9 +84,9 @@ class METADATA(Structure):
 # lib = CDLL("/home/pjreddie/documents/darknet/libdarknet.so", RTLD_GLOBAL)
 # lib = CDLL("libdarknet.so", RTLD_GLOBAL)
 hasGPU = True
+libPath = os.path.dirname(__file__)
+libPath = os.path.join(libPath, "..", "..", "lib")
 if os.name == "nt":
-    libPath = os.path.dirname(__file__)
-    libPath = os.path.join(libPath, "..", "..", "lib")
     os.environ['PATH'] = libPath + ';' + os.environ['PATH']
     winGPUdll = os.path.join(libPath, "yolo_cpp_dll.dll")
     winNoGPUdll = os.path.join(libPath, "yolo_cpp_dll_nogpu.lib")
@@ -128,7 +128,7 @@ if os.name == "nt":
             print(
                 "Environment variables indicated a CPU run, but we didn't find `" + winNoGPUdll + "`. Trying a GPU run anyway.")
 else:
-    lib = CDLL(os.path.dirname(__file__) + "/../libdarknet.so", RTLD_GLOBAL)
+    lib = CDLL(os.path.join(libPath, "libdarknet.so"), RTLD_GLOBAL)
 lib.network_width.argtypes = [c_void_p]
 lib.network_width.restype = c_int
 lib.network_height.argtypes = [c_void_p]

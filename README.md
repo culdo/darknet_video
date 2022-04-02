@@ -18,6 +18,7 @@ Use with [python-OP3](https://github.com/culdo/python-OP3)
 * MJPEG streaming for YOLO+SiamMask result on port 8091 
 * Auto labeling powered by YOLO+SiamMask.
 # Requirement
+* CUDA Toolkit 10.1 + cuDNN 7.6.5 or you can download those dll in Releases
 * Ubuntu 18.04 or 16.04 
 * Ubuntu 16.04 need compiled opencv for unicode labels on result image
 * Put this project in same directory as [darknet](https://github.com/AlexeyAB/darknet)
