@@ -16,7 +16,7 @@ from darknet_video.utils.labeling import pseudo_label, prewrite_label
 class YOLODetector:
     def __init__(self, stream, weights_path,
                  config_path=None, meta_path=None, meta_file="coco.data",
-                 show_gui=False, is_tracking=False, darknet_dir="../../darknet",
+                 show_gui=False, is_tracking=False, darknet_dir="..",
                  is_stream_result=False, is_labeling=False, only_tracking=False,
                  autoplay=1, is_write_path=True, data_name=None,
                  label_empty=False, label_subset=1, only_one=False, labels_map=(),
@@ -116,7 +116,7 @@ class YOLODetector:
         if os.path.dirname(self.config_path) == "":
             self.config_path = os.path.join(package_dir, "cfg", self.config_path)
 
-        self.weights_path = os.path.join(self.darknet_dir, self.weights_path)
+        self.weights_path = os.path.join(self.darknet_dir, "weights", self.weights_path)
         print(self.weights_path)
 
         if not os.path.exists(self.config_path):

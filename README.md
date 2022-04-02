@@ -17,11 +17,13 @@ Use with [python-OP3](https://github.com/culdo/python-OP3)
 * Object size threshold and class filtering
 * MJPEG streaming for YOLO+SiamMask result on port 8091 
 * Auto labeling powered by YOLO+SiamMask.
-# Requirement
-* CUDA Toolkit 10.1 + cuDNN 7.6.5 or you can download those dll in Releases
-* Ubuntu 18.04 or 16.04 
-* Ubuntu 16.04 need compiled opencv for unicode labels on result image
-* Put this project in same directory as [darknet](https://github.com/AlexeyAB/darknet)
+# Requirements
+* Compiled OpenCV with python wrapper and TrueType contrib module
+
+You can download below files in [Releases](https://github.com/culdo/darknet_video/releases), and unzip to project root:
+* Compiled darknet yolo_cpp_dll.dll
+* CUDA Toolkit 10.1 + cuDNN 7.6.5
+* the darknet weight you want to use (ex: yolov4.weight)
 ## Development Installation
 `pip3 install --user -e .`
 ## Usage
@@ -29,11 +31,15 @@ Use with [python-OP3](https://github.com/culdo/python-OP3)
 from darknet_python.run_detector import ThreadingDetector
 # First argument same as cv2.captureVideo() argument, here we use web camera.
 # If not pass config_path, loading config of basename of weights by default.
-# By default loading meta file of coco.data.
+# By default, it load meta file of coco.data.
 ThreadingDetector(0, weights_path='yolov3.weights')
 ```
 You can find additional examples on `test/test_darknet.py`. 
-
+## Pyinstaller
+You can use pyinstaller to generate standalone executable
+```
+pyinstaller -F --add-binary "../lib;lib" --add-data "../darknet_video/cfg;darknet_video/cfg" --add-data "../darknet_video/data;darknet_video/data" --add-data "../weights;weights" .\test_darknet.py
+```
 ## Labeling assisted by YOLO-SiamMask
 Automating labeling use native detection ability of YOLO and SiamMask. 
 ### To-do list

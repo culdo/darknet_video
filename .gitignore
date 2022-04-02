@@ -2,3 +2,5 @@
 *.egg-info/
 *.mp4
 __pycache__/
+*.dll
+build/
