@@ -40,7 +40,7 @@ if __name__ == '__main__':
     indoor_lab = "rtsp://192.168.0.60:554/user=admin&password=&channel=1&stream=0.sdp?real_stream--rtp-caching=1"
     op3_camera = "http://192.168.0.101:8080/stream?topic=/usb_cam_node/image_raw&type=ros_compressed"
     gg_phone_ip = "http://203.64.134.168:8000/video"
-    phone_ip = "http://192.168.0.249:8080/video"
+    phone_ip = "http://192.168.13.246:8080/video"
     wan_phone_ip = "http://203.64.134.168:8082/video"
 
     v4_weights = "bin/yolov4.weights"
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     yt_video = get_yt_vid("https://www.youtube.com/watch?v=9XPBNaLXzPo")
     # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
     if not labeling:
-        coco_yolo(yt_video, enet_weights, is_realtime=False, is_tracking=False,
-                  meta_file="coco_cht.data", thresh=0.25, show_gui=True)
+        coco_yolo(phone_ip, enet_weights, is_realtime=True, is_tracking=False,
+                  meta_file="coco_cht.data", thresh=0.25, show_gui=True, is_stream_result=False)
     else:
         pass

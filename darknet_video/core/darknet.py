@@ -4,7 +4,7 @@ Python 3 wrapper for identifying objects in images
 
 Requires DLL compilation
 
-Both the GPU and no-GPU version should be compiled; the no-GPU version should be renamed "yolo_cpp_dll_nogpu.dll".
+Both the GPU and no-GPU version should be compiled; the no-GPU version should be renamed "yolo_cpp_dll_nogpu.lib".
 
 On a GPU system, you can force CPU evaluation by any of:
 
@@ -66,11 +66,7 @@ class DETECTION(Structure):
                 ("objectness", c_float),
                 ("sort_class", c_int),
                 ("uc", POINTER(c_float)),
-                ("points", c_int),
-                ("embeddings", POINTER(c_float)),
-                ("embedding_size", c_int),
-                ("sim", c_float),
-                ("track_id", c_int)]
+                ("points", c_int)]
 
 
 class IMAGE(Structure):
@@ -89,13 +85,11 @@ class METADATA(Structure):
 # lib = CDLL("libdarknet.so", RTLD_GLOBAL)
 hasGPU = True
 if os.name == "nt":
-    cwd = os.path.dirname(__file__)
-    cwd = os.path.join(cwd, "..", "..", "..", "darknet", "build", "darknet", "x64")
-    os.add_dll_directory('c:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.2/bin')
-    os.add_dll_directory(cwd)
-    os.environ['PATH'] = cwd + ';' + os.environ['PATH']
-    winGPUdll = os.path.join(cwd, "yolo_cpp_dll.dll")
-    winNoGPUdll = os.path.join(cwd, "yolo_cpp_dll_nogpu.dll")
+    libPath = os.path.dirname(__file__)
+    libPath = os.path.join(libPath, "..", "..", "lib")
+    os.environ['PATH'] = libPath + ';' + os.environ['PATH']
+    winGPUdll = os.path.join(libPath, "yolo_cpp_dll.dll")
+    winNoGPUdll = os.path.join(libPath, "yolo_cpp_dll_nogpu.lib")
     envKeys = list()
     for k, v in os.environ.items():
         envKeys.append(k)

@@ -18,15 +18,13 @@ class ThreadingDetector:
     def _run(self):
         cap_th = self._captrue_stream()
         cap_th.start()
-        detect_th = self._detect_frame()
-        detect_th.start()
         if self.is_stream_result:
             server_th = self._stream_result()
             server_th.start()
+        self.yolo.detect_stream()
         if self.blocking:
-            detect_th.join()
             cap_th.join()
-        self._after_clear()
+        self._check_after_clear()
 
     def _detect_frame(self):
         def thread():
@@ -49,7 +47,7 @@ class ThreadingDetector:
 
         return Thread(target=thread)
 
-    def _after_clear(self):
+    def _check_after_clear(self):
         def thread():
             while not self.stream.is_stop:
                 time.sleep(0.01)
