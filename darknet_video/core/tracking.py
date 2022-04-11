@@ -1,8 +1,12 @@
+import argparse
 import os
 
 import SiamMask.experiments.siammask_sharp as model
+import cv2
+import numpy as np
+import torch
 from SiamMask.experiments.siammask_sharp.custom import Custom
-from SiamMask.tools.test import *
+from SiamMask.tools.run_siammask import siamese_init, siamese_track
 from SiamMask.utils.config_helper import load_config
 from SiamMask.utils.load_helper import load_pretrain
 

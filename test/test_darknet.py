@@ -22,7 +22,7 @@ if __name__ == '__main__':
     yt_video = get_yt_vid("https://www.youtube.com/watch?v=9XPBNaLXzPo")
     # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
     if not labeling:
-        coco_yolo(yt_video, enet_weights, is_realtime=True, is_tracking=False,
-                  meta_file="coco_cht.data", thresh=0.25, show_gui=True, is_stream_result=False)
+        coco_yolo(yt_video, enet_weights, is_realtime=False, is_tracking=True,
+                  meta_file="coco_cht.data", thresh=0.50, record_fps=24, show_gui=True, is_stream_result=False, save_video=False)
     else:
         pass

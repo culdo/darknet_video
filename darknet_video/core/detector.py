@@ -11,9 +11,11 @@ from darknet_video.core import darknet
 from darknet_video.core.darknet import MetaMain
 from darknet_video.utils.common import cv_draw_boxes, all_nms, cv_draw_text, sort_confid
 from darknet_video.utils.labeling import pseudo_label, prewrite_label
-
+from darknet_video.view.cv2_gui import check_cv2_gui
 
 class YOLODetector:
+    _check_gui = check_cv2_gui
+
     def __init__(self, stream, weights_path,
                  config_path=None, meta_path=None, meta_file="coco.data",
                  show_gui=False, is_tracking=False, darknet_dir="..",
@@ -38,7 +40,7 @@ class YOLODetector:
 
         self.stream = stream
         self.stream.tb_q = Queue()
-        if is_labeling or autoplay == 0:
+        if is_labeling or autoplay == 0 or save_video:
             self.stream.is_lock = True
         if is_labeling:
             self.prev_coord = None
@@ -230,46 +232,14 @@ class YOLODetector:
             self.frame = np.copy(self.stream.raw)
         print("frame_i: %s" % self.stream.frame_i)
 
-    def _check_gui(self):
-        cv2.imshow("Detected", self.yolo_raw)
-        key = cv2.waitKey(self.autoplay)
-        print("pressed key: %d" % key)
-        # enter
-        if self.is_tracking:
-            if key == ord("t"):
-                self.only_tracking = False
-                self._select_tracking_roi()
-            elif key == ord("o"):
-                self.only_tracking = True
-                self._select_tracking_roi()
-
-        # arrow left
-        if key == 81:
-            self.stream.is_previous = True
-        elif self.is_labeling and key == ord("m"):
-            print("No detected boxes, please selecting one manually. ")
-            if key == ord("m"):
-                self.stream.detections = []
-                self.manual_roi()
-        elif key == ord(' '):
-            if len(self.stream.detections) == 0 and not self.only_tracking and self.is_labeling:
-                self.stream.manual_roi = self.prev_coord
-            if self.autoplay == 1:
-                self.autoplay = 0
-            else:
-                self.autoplay = 1
-        elif key == ord('q'):
-            self.stream.is_stop = True
-            return "q"
-
     def _save_video(self):
-        h, w, _ = self.yolo_raw.shape
-        if w >= h:
-            factor = 1280 / w
-        else:
-            factor = 720 / h
-        yolo_raw = cv2.resize(self.yolo_raw, (1280, 720))
-        self.out.write(yolo_raw)
+        # h, w, _ = self.yolo_raw.shape
+        # if w >= h:
+        #     factor = 1280 / w
+        # else:
+        #     factor = 720 / h
+        # yolo_raw = cv2.resize(self.yolo_raw, (1280, 720))
+        self.out.write(self.yolo_raw)
 
     def _select_tracking_roi(self):
         self.picked_det = True
